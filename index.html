@@ -250,6 +250,20 @@ body.viewmode .advice,body.viewmode .banner{display:none}
 .advice-tbl .num2{font-variant-numeric:tabular-nums;font-weight:750}
 .advice-tbl .hint2{font-size:12px;color:var(--muted);white-space:normal;line-height:1.4}
 @media print{header,.hd-actions,.tw .del,.tabs{display:none}body{background:#fff}}
+/* 常驻恢复栏 */
+.recovery-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:#0f172a;color:#e2e8f0;font-size:12.5px;padding:8px 14px;position:sticky;top:0;z-index:30}
+.recovery-bar .rb-status{font-weight:700;white-space:nowrap}
+.recovery-bar .rb-sep{opacity:.4}
+.recovery-bar .rb-btn{font-size:12px;padding:5px 10px;border-radius:7px;border:1px solid #334155;background:#1e293b;color:#e2e8f0;cursor:pointer}
+.recovery-bar .rb-btn:hover{background:#334155}
+.recovery-bar .rb-btn:disabled{opacity:.4;cursor:not-allowed}
+.recovery-bar .rb-tip{opacity:.72;margin-left:auto;font-size:11.5px}
+@media(max-width:640px){.recovery-bar .rb-tip{display:none}}
+body.viewmode .recovery-bar{display:none !important}
+/* 恢复向导 */
+.restore-grid{display:flex;flex-wrap:wrap;gap:8px}
+.restore-grid .btn{flex:1;min-width:130px}
+
 </style>
 </head>
 <body>
@@ -268,6 +282,16 @@ body.viewmode .advice,body.viewmode .banner{display:none}
     </div>
   </div>
 </header>
+
+<div class="recovery-bar" id="recoveryBar">
+  <span class="rb-status" id="rbStatus">☁ 未连接云端</span>
+  <span class="rb-sep">·</span>
+  <button class="rb-btn" id="rbCopyUrl" disabled>复制主链接</button>
+  <button class="rb-btn" id="rbCopyId" disabled>复制云端ID</button>
+  <button class="rb-btn" id="rbCopyCode">导出数据码</button>
+  <button class="rb-btn" id="rbWizard">恢复向导</button>
+  <span class="rb-tip">数据都在云端/本机——换设备打开带参主链接即自动恢复，不会空白</span>
+</div>
 
 <div class="wrap">
 
@@ -460,6 +484,31 @@ body.viewmode .advice,body.viewmode .banner{display:none}
     <div class="modal-ft" style="justify-content:space-between">
       <button class="btn" id="cSet">取消</button>
       <button class="btn primary" id="btnSaveSettings">保存设置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 数据恢复向导 -->
+<div class="mask" id="maskRestore">
+  <div class="modal" style="max-width:580px">
+    <div class="modal-hd"><h3>恢复数据</h3><button id="xRestore">&times;</button></div>
+    <div class="modal-bd">
+      <div class="tip" style="margin-bottom:12px">页面现在是空白的——但数据<b>很可能还在</b>（在云端、在另一台设备的本机、或你之前导出的数据码里）。用下面任意一种方式就能找回来：</div>
+      <div class="fld">
+        <label>① 把「主链接 / 云端ID / 数据码」粘贴到这（自动识别）</label>
+        <input class="inp" id="restoreInput" placeholder="例如 https://nala8899.github.io/xinjiu-dashboard/?s=restful:abc123  或  XJ1:....">
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn sm primary" id="btnRestoreGo">恢复</button>
+          <span style="font-size:11.5px;color:var(--muted);align-self:center">支持整条主链接、纯云端ID、或整段数据码</span>
+        </div>
+      </div>
+      <hr>
+      <div class="restore-grid">
+        <button class="btn sm" id="wizBak">从本机备份恢复</button>
+        <button class="btn sm" id="btnRestoreCode">粘贴数据码导入</button>
+        <button class="btn sm" id="btnRestoreSettings">打开设置连接云端</button>
+      </div>
+      <div class="tip" style="margin-top:12px;line-height:1.7">💡 最稳的方式：收藏带 <code>?s=</code> 的<b>主链接</b>。下次用那个链接打开，数据会自动出现，再也不会空白。<br>云端ID 也随时能在上方「复制云端ID」一键复制。</div>
     </div>
   </div>
 </div>
@@ -900,7 +949,7 @@ function setSync(cls,msg){
 function cloudPull(silent){
   if(!CFG.cloudId) return Promise.resolve(false);
   if(syncState.busy) return Promise.resolve(false);
-  syncState.busy=true; setSync('load','同步中…');
+  syncState.busy=true; setSync('load','同步中…'); syncState.lastFail=false;
   return prov().read(CFG.cloudId).then(function(remote){
     remote=remote||{};
     var rt=remote&&remote.updatedAt?new Date(remote.updatedAt).getTime():0;
@@ -933,6 +982,7 @@ function cloudPull(silent){
       return false;
     }
   }).catch(function(e){
+    syncState.lastFail=true;
     setSync('err','云端连接失败');
     if(!silent) toast('拉取失败：'+e.message);
     return false;
@@ -1756,6 +1806,7 @@ function fillSettings(){
   }else{
     $('#cloudTip').textContent='尚未创建云端空间。创建后会生成一个分享链接，供应商（任何网络）打开即可看到并填写同一份数据。';
   }
+  updateRecoveryBar();
 }
 $('#btnSettings').onclick=function(){ fillSettings(); $('#maskSet').classList.add('on') };
 $('#syncBadge').onclick=function(){
@@ -1883,15 +1934,32 @@ $('#btnReset').onclick=function(){
   if(!confirm('确认清空全部批次与库存记录？此操作不可恢复。')) return;
   D=defaultData(); markDirty(); renderAll(); toast('已清空');
 };
-$('#btnRestoreBak').onclick=function(){
+$('#btnRestoreBak').onclick=restoreFromBak;
+$('#wizBak').onclick=restoreFromBak;
+function restoreFromBak(){
   var b=hasBak();
   if(!b){ toast('本机没有可用备份'); return }
   var cnt=(b.batches?b.batches.length:0), sc=(b.stockLog?b.stockLog.length:0);
   var at='';
   try{ at=localStorage.getItem(LS_KEY+'_bak_at')||'' }catch(e){}
   if(!confirm('发现本机备份：批次 '+cnt+' 条、库存记录 '+sc+' 条'+(at?('\n备份时间：'+new Date(at).toLocaleString('zh-CN')):'')+'\n\n要用这份备份覆盖当前数据吗？')) return;
-  D=b; markDirty(); renderAll(); toast('已从本机备份恢复');
+  D=b; markDirty(); renderAll(); updateRecoveryBar(); closeRestore(); toast('已从本机备份恢复');
+}
+/* 常驻恢复栏 + 恢复向导 按钮 */
+$('#rbCopyUrl').onclick=function(){ if(CFG.cloudId) copy(buildShareUrl(false),'主链接已复制（可编辑·请收藏）') };
+$('#rbCopyId').onclick=function(){ if(CFG.cloudId) copy(CFG.cloudId,'云端ID已复制') };
+$('#rbCopyCode').onclick=function(){ encodeData(JSON.stringify(D)).then(function(c){ copy(c,'数据码已复制') }) };
+$('#rbWizard').onclick=function(){ openRestore() };
+$('#xRestore').onclick=function(){ closeRestore() };
+$('#maskRestore').addEventListener('click',function(e){ if(e.target===this) closeRestore() });
+$('#btnRestoreGo').onclick=function(){ doRestoreFromInput() };
+$('#restoreInput').addEventListener('keydown',function(e){ if(e.key==='Enter'){ e.preventDefault(); doRestoreFromInput() } });
+$('#btnRestoreCode').onclick=function(){
+  var s=prompt('把数据码粘贴到这里：'); if(!s) return;
+  decodeData(s.trim()).then(applyImportFromCode).catch(function(){ toast('数据码解析失败') });
 };
+$('#btnRestoreSettings').onclick=function(){ closeRestore(); fillSettings(); $('#maskSet').classList.add('on') };
+
 
 function copy(txt,msg){
   if(navigator.clipboard&&navigator.clipboard.writeText){
@@ -1970,36 +2038,90 @@ document.addEventListener('click', function(e){
 });
 
 /* ============ 启动 ============ */
-function initFromUrl(){
-  var q=new URLSearchParams(location.search).get('s');
-  if(!q) return false;
-  if(q.indexOf('custom:')===0){
-    var parts=decodeURIComponent(q.slice(7)).split('|');
+function parseS(s){
+  if(s.indexOf('custom:')===0){
+    var parts=decodeURIComponent(s.slice(7)).split('|');
     CFG.provider='custom'; CFG.cuRead=parts[0]||''; CFG.cuWrite=parts[1]||''; CFG.cloudId='custom';
-  }else if(q.indexOf('cloudbase:')===0){
-    var cb=decodeURIComponent(q.slice(10)).split('|');
+  }else if(s.indexOf('cloudbase:')===0){
+    var cb=decodeURIComponent(s.slice(10)).split('|');
     CFG.provider='cloudbase';
     CFG.cbEnv=cb[0]||''; CFG.cbColl=cb[1]||'xinjiu-dash'; CFG.cbRegion=cb[2]||'ap-shanghai';
     CFG.cloudId=cb[3]||'main';
   }else{
-    var i=q.indexOf(':');
+    var i=s.indexOf(':');
     if(i<0) return false;
-    CFG.provider=q.slice(0,i); CFG.cloudId=q.slice(i+1);
+    CFG.provider=s.slice(0,i); CFG.cloudId=s.slice(i+1);
   }
   CFG.autoSync=CFG.autoSync!==false;
   saveCfg();
   return true;
+}
+function initFromUrl(){
+  var q=new URLSearchParams(location.search).get('s');
+  if(!q) return false;
+  return parseS(q);
+}
+/* 根据当前云端配置拼出分享链接（view=true 时带供应商模式） */
+function buildShareUrl(view){
+  var base=location.origin+location.pathname;
+  if(!CFG.cloudId) return base;
+  var q='?s='+encodeURIComponent((CFG.provider||'jsonblob')+':'+CFG.cloudId);
+  if(CFG.provider==='custom') q='?s=custom:'+encodeURIComponent((CFG.cuRead||'')+'|'+(CFG.cuWrite||''));
+  if(CFG.provider==='cloudbase') q='?s=cloudbase:'+encodeURIComponent((CFG.cbEnv||'')+'|'+(CFG.cbColl||'xinjiu-dash')+'|'+(CFG.cbRegion||'ap-shanghai')+'|'+(CFG.cloudId||'main'));
+  return base+q+(view?'&v=view':'');
+}
+/* 常驻恢复栏：始终显示云端状态 + 一键复制主链接/云端ID/数据码 */
+function updateRecoveryBar(){
+  var bar=$('#recoveryBar'); if(!bar) return;
+  if(IS_VIEW){ bar.style.display='none'; return }
+  bar.style.display='';
+  var st=$('#rbStatus');
+  if(CFG.cloudId){
+    st.innerHTML='☁ 已连云端 · '+esc((PROVIDERS[CFG.provider]||PROVIDERS.restful).name);
+    $('#rbCopyUrl').disabled=false; $('#rbCopyId').disabled=false;
+  }else{
+    st.innerHTML='⚠ 未连云端 · 数据仅在本机';
+    $('#rbCopyUrl').disabled=true; $('#rbCopyId').disabled=true;
+  }
+}
+/* 数据恢复向导 */
+function openRestore(){ $('#maskRestore').classList.add('on'); setTimeout(function(){ try{ $('#restoreInput').focus() }catch(e){} },60) }
+function closeRestore(){ $('#maskRestore').classList.remove('on') }
+function applyImportFromCode(j){
+  try{
+    var o=JSON.parse(j);
+    var d=defaultData(); for(var k in d){ if(!(k in o)) o[k]=d[k] }
+    D=o; markDirty(); renderAll(); updateRecoveryBar(); closeRestore(); toast('已从数据码导入');
+  }catch(e){ toast('数据码无效') }
+}
+function doRestoreFromInput(){
+  var v=($('#restoreInput').value||'').trim(); if(!v) return;
+  if(/^XJ[01]:/.test(v)){ decodeData(v).then(applyImportFromCode).catch(function(){ toast('数据码解析失败') }); return }
+  var m=/[?&]s=([^&\s"'<>]+)/.exec(v);
+  if(m){ if(parseS(decodeURIComponent(m[1]))){ closeRestore(); setSync('load','连接中…'); cloudPull(true).then(function(ok){ syncUrl(); updateRecoveryBar(); if(!ok) toast('该链接云端暂无数据，请确认或改用数据码') }) } return }
+  /* 当作纯云端ID（默认公共存储） */
+  CFG.provider=CFG.provider||'restful'; CFG.cloudId=v; saveCfg();
+  setSync('load','连接中…');
+  cloudPull(true).then(function(ok){ syncUrl(); updateRecoveryBar(); closeRestore(); if(!ok) toast('该ID云端暂无数据，请确认ID是否正确（或改用数据码）') });
+}
+function maybeShowWizard(){
+  var empty=(!D.batches||!D.batches.length)&&(!D.stockLog||!D.stockLog.length);
+  if(!empty) return;
+  /* 空白但本地有备份，或连了云端却拉取失败 → 弹向导帮忙找回 */
+  if(hasBak() || syncState.lastFail){ openRestore() }
 }
 
 (function boot(){
   var fromUrl=initFromUrl();
   applyViewMode();
   renderAll();
+  updateRecoveryBar();
   if(CFG.cloudId){
     setSync('load','连接中…');
-    cloudPull(true).then(function(){ syncUrl(); if(CFG.autoSync) startAuto() });
+    cloudPull(true).then(function(){ syncUrl(); updateRecoveryBar(); if(CFG.autoSync) startAuto() }).then(maybeShowWizard);
   }else{
     setSync('','本地模式');
+    maybeShowWizard();
   }
 })();
 
