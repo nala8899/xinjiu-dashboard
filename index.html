@@ -1,0 +1,2021 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>鑫久供货看板 · A/B/C 物料追踪</title>
+<style>
+:root{
+  --bg:#f4f6fb; --card:#ffffff; --line:#e6eaf2; --line2:#eef1f7;
+  --text:#0f172a; --muted:#6b7688; --muted2:#94a1b5;
+  --a:#ea580c; --b:#0d9488; --c:#2563eb;
+  --ok:#16a34a; --warn:#d97706; --bad:#dc2626;
+  --shadow:0 1px 2px rgba(15,23,42,.04),0 8px 24px rgba(15,23,42,.06);
+  --radius:16px;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  font-size:14px; line-height:1.5; -webkit-font-smoothing:antialiased;
+  padding-bottom:60px;
+}
+.wrap{max-width:1280px;margin:0 auto;padding:0 16px}
+h1,h2,h3{margin:0;font-weight:700;letter-spacing:-.01em}
+button{font-family:inherit;font-size:13px;cursor:pointer;border:none;background:none;color:inherit}
+input,select{font-family:inherit;font-size:13px;color:inherit}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum"}
+
+/* header */
+header{background:linear-gradient(180deg,#ffffff,#fbfcfe);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:50;backdrop-filter:saturate(180%) blur(8px)}
+.hd{display:flex;align-items:center;gap:12px;padding:12px 0;flex-wrap:wrap}
+.logo{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#2563eb,#7c3aed);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;font-size:15px;flex:none}
+.ttl{font-size:17px;font-weight:750}
+.sub{font-size:12px;color:var(--muted);margin-top:1px}
+.hd-actions{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.btn{border:1px solid var(--line);background:#fff;padding:7px 12px;border-radius:9px;font-weight:600;color:#374151;transition:.15s;white-space:nowrap}
+.btn:hover{border-color:#c9d3e4;background:#f8fafc}
+.btn:active{transform:translateY(1px)}
+.btn.primary{background:#2563eb;border-color:#2563eb;color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.btn.sm{padding:5px 9px;font-size:12px;border-radius:8px}
+.btn.danger{color:var(--bad);border-color:#f3d3d3}
+.sync-badge{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:#fff;color:var(--muted);white-space:nowrap}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--muted2);flex:none}
+.dot.on{background:var(--ok);box-shadow:0 0 0 3px rgba(22,163,74,.14)}
+.dot.err{background:var(--bad);box-shadow:0 0 0 3px rgba(220,38,38,.14)}
+.dot.load{background:var(--warn);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
+
+/* section */
+.sec{margin-top:20px}
+.sec-hd{display:flex;align-items:baseline;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+.sec-hd h2{font-size:15px}
+.sec-hd .hint{font-size:12px;color:var(--muted)}
+
+/* big cards */
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.mcard{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;position:relative}
+.mcard::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--mc)}
+.mcard .in{padding:16px 18px 18px}
+.mc-top{display:flex;align-items:center;gap:9px}
+.chip{width:30px;height:30px;border-radius:9px;background:var(--mc);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;flex:none}
+.mc-name{font-weight:750;font-size:15px}
+.mc-sub{font-size:11.5px;color:var(--muted)}
+.pill{margin-left:auto;font-size:11.5px;font-weight:700;padding:4px 10px;border-radius:999px;border:1px solid transparent}
+.pill.ok{background:#eafaf0;color:#15803d;border-color:#cdeedb}
+.pill.warn{background:#fff7e8;color:#b45309;border-color:#fae4bb}
+.pill.bad{background:#fdeeee;color:#b91c1c;border-color:#f7cfcf}
+.bignum{font-size:clamp(44px,7.4vw,74px);font-weight:800;line-height:1.02;letter-spacing:-.035em;margin:12px 0 2px;color:var(--text)}
+.bignum small{font-size:20px;font-weight:700;color:var(--muted2);margin-left:6px;letter-spacing:0}
+.biglabel{font-size:12px;color:var(--muted);margin-bottom:14px}
+.brk{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.brk div{background:#f8fafc;border:1px solid var(--line2);border-radius:11px;padding:8px 10px}
+.brk .k{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.brk .k i{width:6px;height:6px;border-radius:2px;display:inline-block}
+.brk .v{font-size:19px;font-weight:750;letter-spacing:-.02em}
+.prow{display:flex;align-items:baseline;justify-content:space-between;font-size:12px;margin-bottom:6px}
+.prow b{font-size:13.5px;font-weight:750}
+.pbar{height:8px;border-radius:999px;background:#eef1f7;overflow:hidden}
+.pbar i{display:block;height:100%;border-radius:999px;background:var(--mc);transition:width .5s cubic-bezier(.2,.7,.3,1)}
+.pfoot{display:flex;justify-content:space-between;font-size:11.5px;color:var(--muted);margin-top:6px}
+.advice{margin-top:13px;padding:9px 11px;border-radius:10px;background:#f8fafc;border:1px dashed #dbe2ee;font-size:12.5px;color:#374151;display:flex;gap:7px;align-items:flex-start}
+.advice b{color:var(--mc)}
+.advice.urgent{background:#fff6f6;border-color:#f6cfcf;color:#9f1239}
+.advice.urgent b{color:#b91c1c}
+
+/* advise banner */
+.banner{background:linear-gradient(100deg,#0f172a,#1e293b);color:#fff;border-radius:var(--radius);padding:14px 18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap;box-shadow:var(--shadow)}
+.banner .bt{font-size:12px;color:#94a3b8;font-weight:600}
+.banner .bl{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rank{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:999px;padding:5px 13px 5px 6px;font-weight:700;font-size:13px}
+.rank .rno{width:20px;height:20px;border-radius:50%;background:#fff;color:#0f172a;font-size:11px;display:flex;align-items:center;justify-content:center;font-weight:800}
+.rank.best{background:rgba(234,88,12,.28);border-color:rgba(251,146,60,.5)}
+
+/* panel */
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.panel-hd{padding:13px 16px;border-bottom:1px solid var(--line2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.panel-hd h3{font-size:14px}
+.panel-hd .r{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.panel-bd{padding:14px 16px}
+
+/* stock input */
+.stock-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end}
+.fld label{display:block;font-size:11.5px;color:var(--muted);font-weight:600;margin-bottom:5px}
+.inp{width:100%;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:#fff;outline:none;transition:.15s;font-size:14px}
+.inp:focus{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+.inp.big{font-size:19px;font-weight:700;padding:10px 12px}
+.inp::placeholder{color:#b9c2d0;font-weight:400}
+.inp:disabled{background:#f8fafc;color:#475569;border-color:var(--line2);cursor:not-allowed}
+
+/* table */
+.tabs{display:flex;gap:6px;flex-wrap:wrap}
+.tab{padding:6px 13px;border-radius:999px;font-size:12.5px;font-weight:650;color:var(--muted);border:1px solid var(--line);background:#fff}
+.tab.on{background:#0f172a;color:#fff;border-color:#0f172a}
+.tab .ct{opacity:.65;font-weight:600;margin-left:4px}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:separate;border-spacing:0;min-width:1000px;font-size:13px}
+th{position:sticky;top:0;background:#fafbfd;text-align:left;font-size:11.5px;font-weight:700;color:var(--muted);padding:10px 10px;border-bottom:1px solid var(--line);white-space:nowrap;z-index:2}
+td{padding:7px 10px;border-bottom:1px solid var(--line2);vertical-align:middle;white-space:nowrap}
+tbody tr:hover{background:#fafbfd}
+tbody tr.newrow{background:#f5f9ff}
+td .cell{border:1px solid transparent;background:transparent;border-radius:8px;padding:6px 8px;width:100%;outline:none;transition:.15s;font-size:13px}
+td .cell:hover{border-color:var(--line);background:#fff}
+td .cell:focus{border-color:#2563eb;background:#fff;box-shadow:0 0 0 3px rgba(37,99,235,.12)}
+td .cell[type=number]{text-align:right;font-variant-numeric:tabular-nums;font-weight:650}
+td .cell[type=date]{font-size:12.5px}
+td .cellsel{border:1px solid var(--line);border-radius:8px;padding:5px 6px;width:auto;min-width:64px;max-width:170px;font-weight:800;font-size:13px;color:#fff;outline:none;cursor:pointer;-webkit-appearance:none;appearance:none;text-align:center}
+td .cellsel:focus{box-shadow:0 0 0 3px rgba(37,99,235,.18)}
+td .cellsel option{color:#0f172a;background:#fff;font-weight:600}
+.ro{display:inline-block;background:#f6f8fb;border:1px solid var(--line2);border-radius:8px;padding:6px 9px;color:#475569;font-size:12.5px;min-width:64px;text-align:center;font-variant-numeric:tabular-nums}
+.ro.late{color:var(--bad);border-color:#f3caca;background:#fdf3f3;font-weight:700}
+td .go{background:#eafaf0;color:#15803d;border:1px solid #cdeedb;border-radius:8px;padding:5px 10px;font-weight:700;font-size:12px;white-space:nowrap}
+td .go:hover{background:#d9f5e4}
+td .edit{background:#f1f5f9;color:#475569;border:1px solid var(--line);border-radius:8px;padding:5px 9px;font-weight:700;font-size:12px;white-space:nowrap}
+td .edit:hover{background:#e2e8f0;color:#0f172a}
+.inline-sel{width:auto;display:inline-block;padding:4px 8px;font-size:12px}
+.pv{margin-top:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pv table{min-width:0;width:100%}
+.pv th{position:static;background:#f8fafc}
+.pv .mrow{font-weight:800}
+.pv .unmatched{color:#b45309;font-size:12px;padding:9px 12px;background:#fffaf0}
+.addgrp{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+.addgrp button{padding:5px 11px;font-size:12.5px;font-weight:700;background:#fff;border-right:1px solid var(--line);color:#374151}
+.addgrp button:last-child{border-right:none}
+.addgrp button:hover{background:#f1f5f9}
+.w-qty{width:98px}.w-qty2{width:52px}.w-date{width:132px}.w-note{width:120px}
+.mtag{display:inline-flex;align-items:center;justify-content:center;width:auto;padding:0 9px;min-height:24px;border-radius:7px;font-weight:800;font-size:12px;color:#fff;white-space:nowrap}
+.st{font-size:11px;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.st.coating{background:#eef2ff;color:#4338ca}
+.st.transit{background:#fff7ed;color:#c2410c}
+.st.done{background:#eafaf0;color:#15803d}
+.st.draft{background:#f1f5f9;color:#64748b}
+.st.overdue{background:#fdeeee;color:#b91c1c}
+.del{color:var(--muted2);font-size:16px;padding:2px 7px;border-radius:7px;line-height:1}
+.del:hover{color:var(--bad);background:#fdeeee}
+.empty{padding:32px 16px;text-align:center;color:var(--muted2);font-size:13px}
+
+/* summary */
+.sums{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.sum{background:#fff;border:1px solid var(--line);border-radius:13px;padding:12px 14px}
+.sum .k{font-size:11.5px;color:var(--muted);font-weight:600}
+.sum .v{font-size:24px;font-weight:800;letter-spacing:-.025em;margin-top:3px}
+.sum .v small{font-size:12px;color:var(--muted2);font-weight:600;margin-left:3px}
+
+/* modal */
+.mask{position:fixed;inset:0;background:rgba(15,23,42,.45);backdrop-filter:blur(3px);display:none;align-items:center;justify-content:center;z-index:100;padding:18px}
+.mask.on{display:flex}
+.modal{background:#fff;border-radius:18px;max-width:560px;width:100%;max-height:86vh;overflow:auto;box-shadow:0 24px 64px rgba(15,23,42,.24)}
+.modal-hd{padding:16px 20px;border-bottom:1px solid var(--line2);display:flex;align-items:center}
+.modal-hd h3{font-size:15px}
+.modal-hd button{margin-left:auto;font-size:20px;color:var(--muted2);line-height:1;padding:0 4px}
+.modal-bd{padding:18px 20px}
+.modal-ft{padding:14px 20px;border-top:1px solid var(--line2);display:flex;gap:9px;justify-content:flex-end;flex-wrap:wrap}
+.fld{margin-bottom:13px}
+.fld label{display:block;font-size:12px;color:var(--muted);font-weight:650;margin-bottom:5px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.matcfg{display:flex;flex-direction:column;gap:8px}
+.mcr{display:flex;align-items:center;gap:8px}
+.mcr .dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.mcr .inp{flex:1}
+.mcr .inp:first-of-type{font-weight:650}
+.mc-coderow{display:inline-flex;align-items:center;gap:5px;vertical-align:middle;max-width:100%}
+.mc-coderow .mc-code{flex:0 1 auto;min-width:0}
+.mnn2{display:flex;align-items:center;gap:5px}
+.copybtn{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border:none;background:transparent;border-radius:7px;color:#94a3b8;cursor:pointer;padding:0;transition:.15s;flex:0 0 auto}
+.copybtn:hover{background:#eef2f7;color:#2563eb}
+.copybtn:active{transform:scale(.92)}
+.copybtn svg{display:block}
+.copybtn.ok{color:#16a34a}
+.copybtn.sm{width:22px;height:22px}
+.matgrid{display:flex;flex-direction:column;gap:8px}
+.matgrid .matlbl{display:grid;grid-template-columns:auto auto 1fr;gap:8px;align-items:center;margin:0}
+.matgrid .matlbl .dot{width:10px;height:10px;border-radius:50%}
+.matgrid .matlbl .mnn{display:flex;flex-direction:column;gap:1px;min-width:150px}
+.matgrid .matlbl .mnn b{font-size:13px;font-weight:700;color:var(--text)}
+.matgrid .matlbl .mnn span{font-size:11px;color:var(--muted)}
+.matgrid .matlbl .inp{text-align:right;font-weight:700}
+@media(max-width:980px){.matgrid .matlbl{grid-template-columns:1fr}.matgrid .matlbl .mnn{flex-direction:row;align-items:baseline;gap:8px;min-width:auto}}
+.settbl{width:100%;min-width:0;border-collapse:collapse;table-layout:fixed;font-size:13px}
+.settbl th{font-weight:600;color:var(--muted);font-size:11.5px;padding:6px 2px 8px;text-align:center;background:#f8fafc;border-bottom:1px solid var(--line2);white-space:nowrap}
+.settbl th:nth-child(1){width:34%}
+.settbl th:nth-child(2){width:22%}
+.settbl th:nth-child(3){width:22%}
+.settbl th:nth-child(4){width:22%}
+.settbl td{padding:6px 2px;vertical-align:middle;border-bottom:1px solid var(--line2)}
+.settbl td .inp{width:100%;margin:0}
+.settbl td:nth-child(3) .inp,.settbl td:nth-child(4) .inp{text-align:right}
+.settbl td:first-child{padding-left:0}
+.settbl td:last-child{padding-right:0}
+.setcode{display:flex;align-items:center;gap:4px;min-width:0}
+.setcode .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.setcode .inp{flex:1 1 auto;width:100%;min-width:0;font-weight:650;font-size:12.5px;padding-left:8px;padding-right:8px}
+.setcode .copybtn{flex:0 0 auto}
+.tip{font-size:12px;color:var(--muted);background:#f8fafc;border:1px solid var(--line2);border-radius:10px;padding:10px 12px;line-height:1.6}
+.tip b{color:var(--text)}
+.code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:11.5px;background:#f1f5f9;border:1px solid var(--line);border-radius:8px;padding:8px 10px;word-break:break-all;max-height:110px;overflow:auto;color:#334155}
+hr{border:none;border-top:1px solid var(--line2);margin:15px 0}
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(20px);background:#0f172a;color:#fff;padding:11px 20px;border-radius:12px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:.25s;z-index:200;max-width:90vw;text-align:center;box-shadow:0 12px 32px rgba(0,0,0,.25)}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+footnote,.foot{text-align:center;color:var(--muted2);font-size:11.5px;padding:26px 0 10px}
+
+@media(max-width:980px){.cards{grid-template-columns:1fr}.sums{grid-template-columns:repeat(2,1fr)}.stock-grid{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+@media(max-width:520px){.ttl{font-size:15px}.hd-actions{width:100%;margin-left:0}.bignum{font-size:52px}}
+/* 只读（供应商）模式 */
+body.viewmode #btnStockAction,
+body.viewmode #btnPaste,body.viewmode #btnMatSettings,body.viewmode #btnSettings,
+body.viewmode #btnManualSync,body.viewmode td .go[data-recv],body.viewmode td .del,
+body.viewmode #btnClearAll{display:none !important}
+body.viewmode td input,body.viewmode td select,body.viewmode .stock-grid input{background:#f6f8fb;color:#475569}
+body.viewmode .advice,body.viewmode .banner{display:none}
+#addLbl{display:none}
+.bignum.ok{color:var(--ok)}
+.bignum.warn{color:var(--warn)}
+.bignum.bad{color:var(--bad)}
+.pill{font-size:22px;font-weight:800;padding:5px 13px}
+.addgrp button{display:inline-flex;align-items:center;gap:3px;padding:6px 14px}
+.addgrp .aplus{font-size:2.2em;font-weight:900;line-height:1;transform:translateY(-1px)}
+.addgrp .atxt{font-size:12.5px;font-weight:700}
+.mini3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid var(--line2)}
+.mini3>div{text-align:center}
+.mini3>div span{display:block;font-size:11px;color:var(--muted);margin-bottom:2px}
+.mini3>div b{font-size:16px;font-weight:800;font-variant-numeric:tabular-nums}
+.advice-tbl{width:100%;border-collapse:collapse;font-size:13px}
+.advice-tbl th{text-align:left;color:var(--muted);font-weight:700;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap;background:#fafbfd}
+.advice-tbl td{padding:10px;border-bottom:1px solid var(--line2);vertical-align:middle;white-space:nowrap}
+.advice-tbl .rn{width:26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:800;font-size:12px;background:#e2e8f0;color:#0f172a}
+.advice-tbl .best .rn{background:var(--bad);color:#fff}
+.advice-tbl .mat{font-weight:800}
+.advice-tbl .num2{font-variant-numeric:tabular-nums;font-weight:750}
+.advice-tbl .hint2{font-size:12px;color:var(--muted);white-space:normal;line-height:1.4}
+@media print{header,.hd-actions,.tw .del,.tabs{display:none}body{background:#fff}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hd">
+    <div class="logo">鑫</div>
+    <div>
+      <div class="ttl">鑫久供货看板</div>
+    </div>
+    <div class="hd-actions">
+      <button class="sync-badge" id="syncBadge" title="点击打开同步设置"><span class="dot" id="syncDot"></span><span id="syncTxt">本地模式</span></button>
+      <button class="btn" id="btnManualSync">同步</button>
+      <button class="btn" id="btnSettings">设置 / 分享</button>
+      <button class="btn" id="btnMatSettings">物料设置</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- 首次使用引导 -->
+  <div class="sec" id="guide" style="display:none">
+    <div class="panel" style="border-style:dashed;box-shadow:none;background:#fcfdff">
+      <div class="panel-bd" style="padding:14px 16px">
+        <div style="font-size:13px;font-weight:750;margin-bottom:8px">三步开始使用</div>
+        <div style="font-size:12.5px;color:#475569;line-height:1.9">
+          <b style="color:var(--a)">1.</b> 点右上角「设置 / 分享」→「创建 / 连接云端空间」，然后把生成的<b>分享链接</b>发给供应商（任何网络都能打开，双方填写实时同步）<br>
+          <b style="color:var(--a)">2.</b> 在<b>「喷塑中」</b>页用「+ 大黑 / + 小黑 / + 蓝色」登记毛坯发喷塑的<b>日期和数量</b>，系统自动推算预计发货时间（在哪个板块点 +，新增的就是该阶段的记录）<br>
+          <b style="color:var(--a)">3.</b> 三个时间点分开处理：喷塑完点<b>「标记发货」</b>（可填少于喷塑数的实际发货量）→ 批次进<b>「发货在途」</b>；到货点<b>「标记入库」</b>填合格数与不良数 → 进<b>「入库」</b>；金蝶数据用<b>「批量粘贴入库」</b>直接导入；<b>每天填写即时库存</b>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 大数字卡片 -->
+  <div class="sec">
+    <div class="sec-hd">
+      <h2>当前总量</h2>
+      <span class="hint">总量 = 喷塑中 + 在途 + 即时库存（单位：个）</span>
+    </div>
+    <div class="cards" id="cards"></div>
+  </div>
+
+  <!-- 即时库存录入 -->
+  <div class="sec">
+    <div class="panel">
+      <div class="panel-hd" style="align-items:center">
+        <h3 style="font-size:22px;font-weight:800;letter-spacing:.04em">即时库存</h3>
+        <div class="r">
+          <button class="btn sm" id="btnStockHistory">历史记录</button>
+          <button class="btn sm primary" id="btnStockAction">新增即时库存</button>
+        </div>
+      </div>
+      <div class="panel-bd">
+        <div class="stock-grid">
+          <div class="fld" style="margin:0"><label>库存日期</label><input class="inp" type="date" id="stkDate"></div>
+          <div class="fld" style="margin:0"><label id="lblStkA"><span style="color:var(--a);font-weight:800">LSMZSS-BL(P)</span> 大黑</label><input class="inp big num" type="number" id="stkA" min="0" step="1" placeholder="0"></div>
+          <div class="fld" style="margin:0"><label id="lblStkB"><span style="color:var(--b);font-weight:800">LSMZSS-01-BL(P)</span> 小黑</label><input class="inp big num" type="number" id="stkB" min="0" step="1" placeholder="0"></div>
+          <div class="fld" style="margin:0"><label id="lblStkC"><span style="color:var(--c);font-weight:800">LSYXSS-BU(D)</span> 蓝色</label><input class="inp big num" type="number" id="stkC" min="0" step="1" placeholder="0"></div>
+        </div>
+        <div id="stockTip" style="margin-top:10px;font-size:12px;color:var(--muted)"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 批次流水 -->
+  <div class="sec">
+    <div class="panel">
+      <div class="panel-hd">
+        <h3>批次流水</h3>
+        <div class="tabs" id="tabs"></div>
+        <div class="r">
+          <button class="btn sm" id="btnPaste" style="display:none">批量粘贴入库（金蝶）</button>
+          <span id="addLbl" style="font-size:12px;color:var(--muted)">新增：</span>
+          <span class="addgrp" id="addGrp"></span>
+        </div>
+      </div>
+      <div class="tw">
+        <table id="tbl"></table>
+      </div>
+      <div class="empty" id="emptyTip" style="display:none">该阶段暂无批次</div>
+    </div>
+  </div>
+
+  <div class="foot">数据每日自动保存在本机浏览器；开启云同步后，供应商打开分享链接即可看到同一份数据</div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="mask" id="maskSet">
+  <div class="modal">
+    <div class="modal-hd"><h3>设置 / 分享</h3><button id="xSet">&times;</button></div>
+    <div class="modal-bd">
+      <div class="fld">
+        <label>云端共享状态</label>
+        <div class="tip" id="cloudTip">尚未创建云端空间。创建后会生成一个分享链接，供应商（任何网络）打开即可看到并填写同一份数据。</div>
+      </div>
+      <div class="fld" id="shareBox" style="display:none">
+        <div style="background:#fff7ed;border:1px solid #fed7aa;color:#9a3412;font-size:12px;line-height:1.7;padding:9px 11px;border-radius:8px;margin-bottom:12px">📌 <b>请复制下方「主链接」并收藏</b>。它是带云端 ID 的<b>永久链接</b>，换设备、换部署域名打开都能自动恢复数据。<br>直接访问部署地址（不带 <code>?s=</code> 参数）会显示空白——务必用这个带参链接。</div>
+        <label>① 主链接（<b style="color:var(--a)">你自己用 · 可编辑</b>）</label>
+        <div class="code" id="shareUrl"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn sm primary" id="btnCopyUrl">复制主链接</button>
+          <button class="btn sm" id="btnOpenUrl">新窗口打开</button>
+        </div>
+        <label style="margin-top:13px">② 供应商链接（<b style="color:var(--b)">可填写表格 · 发给供应商</b>）</label>
+        <div class="code" id="shareUrlView"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+          <button class="btn sm primary" id="btnCopyUrlView">复制供应商链接</button>
+          <button class="btn sm" id="btnOpenUrlView">新窗口打开</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:9px;line-height:1.7">两个链接看的是<b>同一份云端数据</b>，任何设备、任何网络打开都能看到最新进度。<br>区别：主链接可新增/修改/删除/改设置；<b>供应商链接可填写批次表格</b>（发喷塑日期 / 数量 / 预计发货时间 / 备注等），并可在<b>「喷塑中」「发货在途」两页新增批次、可在「喷塑中」页标记发货</b>，但<b>不能删除、不能新增入库、不能改物料、不能标记入库、不能改设置</b>。</div>
+      </div>
+      <hr>
+      <div class="fld">
+        <label>云端服务</label>
+        <select class="inp" id="selProvider">
+          <option value="auto">自动（依次尝试可用的）</option>
+          <option value="cloudbase">腾讯云开发 CloudBase（国内·推荐）</option>
+          <option value="restful">公共存储（免注册，默认）</option>
+          <option value="jsonbin">JSONBin（填免费 Key，更稳定）</option>
+          <option value="jsonblob">JSONBlob</option>
+          <option value="github">GitHub Gist（免费·需 Token）</option>
+          <option value="custom">自定义接口</option>
+        </select>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:6px">国内长期使用推荐 <b>腾讯云开发 CloudBase</b>（国内节点、速度快、有免费额度）；免注册公共存储开箱即用，但不保证长期保留。</div>
+      </div>
+      <div class="fld" id="cbBox" style="display:none">
+        <label>环境 ID</label>
+        <input class="inp" id="cbEnv" placeholder="如 xinjiu-1a2b3c4d5e">
+        <label style="margin-top:9px">数据集合名</label>
+        <input class="inp" id="cbColl" placeholder="xinjiu-dash">
+        <label style="margin-top:9px">地域</label>
+        <select class="inp" id="cbRegion">
+          <option value="ap-shanghai">上海（默认）</option>
+          <option value="ap-guangzhou">广州</option>
+          <option value="ap-beijing">北京</option>
+          <option value="ap-chengdu">成都</option>
+          <option value="ap-hongkong">中国香港</option>
+        </select>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.75">
+          在腾讯云开发控制台做三件事：<b>①</b> 开通环境，复制环境 ID 填上面（形如 xxx-1a2b3c）；<b>②</b> 「登录授权」里<b>开启匿名登录</b>；<b>③</b> 数据库新建一个集合（名字填上面），权限改成<b>「所有用户可读，所有用户可写」</b>。
+        </div>
+      </div>
+      <div class="fld" id="keyBox" style="display:none">
+        <label>API Key</label>
+        <input class="inp" id="apiKey" placeholder="jsonbin.io 的 X-Master-Key">
+      </div>
+      <div class="fld" id="customBox" style="display:none">
+        <label>自定义读取地址 (GET)</label>
+        <input class="inp" id="cuRead" placeholder="https://your-api/read">
+        <label style="margin-top:9px">自定义写入地址 (PUT/POST)</label>
+        <input class="inp" id="cuWrite" placeholder="https://your-api/write">
+      </div>
+      <div class="fld" id="ghBox" style="display:none">
+        <label>GitHub Token（Personal Access Token）</label>
+        <input class="inp" id="ghToken" placeholder="ghp_xxx 或 github_pat_xxx" type="password" autocomplete="off">
+        <label style="margin-top:9px">已有 Gist ID（留空则自动创建）</label>
+        <input class="inp" id="ghGist" placeholder="可选，如 a1b2c3d4e5f6">
+        <div style="font-size:11.5px;color:var(--muted);margin-top:8px;line-height:1.75">
+          ① GitHub → Settings → Developer settings → <b>Personal access tokens</b> → 生成 token（勾选 <b>gist</b> 权限）；<br>
+          ② 把 token 粘贴到上面（仅存于你本机浏览器，供应商只读链接<b>不含</b> token）；<br>
+          ③ 点「创建 / 连接云端空间」会自动生成公开 Gist 存数据。<br>
+          <span style="color:var(--warn)">提醒：api.github.com 国内访问时快时慢；token 请勿泄露，用完可随时在 GitHub 撤销。</span>
+        </div>
+      </div>
+      <div class="fld">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <button class="btn sm" id="btnTest">测试连通性</button>
+          <span style="font-size:12px;color:var(--muted)" id="testOut"></span>
+        </div>
+      </div>
+      <div class="fld">
+        <label>云端空间 ID</label>
+        <input class="inp" id="cloudId" placeholder="留空则自动创建">
+      </div>
+      <div class="fld" style="display:flex;align-items:center;gap:9px">
+        <input type="checkbox" id="autoSync" style="width:16px;height:16px">
+        <label style="margin:0;font-weight:600;color:var(--text)">自动同步（数据变更后自动上传，每 60 秒自动拉取）</label>
+      </div>
+      <div class="fld">
+        <label>云端空间</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sm primary" id="btnCreate">创建 / 连接云端空间</button>
+          <button class="btn sm" id="btnDisc">断开云端</button>
+        </div>
+      </div>
+      <hr>
+      <div class="fld">
+        <label>喷塑周期（天）</label>
+        <input class="inp num" type="number" id="cycleDays" min="0" max="60" step="1">
+        <div style="font-size:11.5px;color:var(--muted);margin-top:5px">填写「发喷塑日期」时自动推算「预计发货时间」</div>
+      </div>
+      <hr>
+      <div class="fld">
+        <label>数据备份 / 迁移</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn sm" id="btnExport">导出 JSON 文件</button>
+          <button class="btn sm" id="btnImport">导入 JSON 文件</button>
+          <button class="btn sm" id="btnCopyCode">复制数据码</button>
+          <button class="btn sm" id="btnPasteCode">粘贴数据码</button>
+          <button class="btn sm" id="btnRestoreBak">从本机备份恢复</button>
+          <button class="btn sm danger" id="btnReset">清空全部数据</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--muted);margin-top:7px">云服务不可用时，可用「数据码」通过微信把整份数据发给对方粘贴导入。<b>本机每次保存前会自动留一份备份</b>，误同步/误覆盖后可点「从本机备份恢复」找回上一版本。</div>
+      </div>
+    </div>
+    <div class="modal-ft" style="justify-content:space-between">
+      <button class="btn" id="cSet">取消</button>
+      <button class="btn primary" id="btnSaveSettings">保存设置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 物料设置 -->
+<div class="mask" id="maskMat">
+  <div class="modal" style="max-width:760px">
+    <div class="modal-hd"><h3>物料设置</h3><button id="xMat">&times;</button></div>
+    <div class="modal-bd">
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:12px">料号、描述（简称）、订单数量、每周目标。看板、新增按钮、金蝶识别都按这里显示，改完保存即时生效。</div>
+      <table class="settbl">
+        <thead>
+          <tr><th>料号</th><th>描述</th><th>订单数量</th><th>每周目标</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>
+              <div class="setcode"><span class="dot" style="background:var(--a)"></span><input class="inp" id="codeA" placeholder="料号"><button class="copybtn sm" data-m="A" title="复制料号"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+            </td>
+            <td><input class="inp" id="nameA" placeholder="简称"></td>
+            <td style="text-align:right"><input class="inp num" type="number" id="ogA" min="0" step="100" placeholder="0"></td>
+            <td style="text-align:right"><input class="inp num" type="number" id="tgA" min="0" step="100" placeholder="0"></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="setcode"><span class="dot" style="background:var(--b)"></span><input class="inp" id="codeB" placeholder="料号"><button class="copybtn sm" data-m="B" title="复制料号"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+            </td>
+            <td><input class="inp" id="nameB" placeholder="简称"></td>
+            <td style="text-align:right"><input class="inp num" type="number" id="ogB" min="0" step="100" placeholder="0"></td>
+            <td style="text-align:right"><input class="inp num" type="number" id="tgB" min="0" step="100" placeholder="0"></td>
+          </tr>
+          <tr>
+            <td>
+              <div class="setcode"><span class="dot" style="background:var(--c)"></span><input class="inp" id="codeC" placeholder="料号"><button class="copybtn sm" data-m="C" title="复制料号"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></button></div>
+            </td>
+            <td><input class="inp" id="nameC" placeholder="简称"></td>
+            <td style="text-align:right"><input class="inp num" type="number" id="ogC" min="0" step="100" placeholder="0"></td>
+            <td style="text-align:right"><input class="inp num" type="number" id="tgC" min="0" step="100" placeholder="0"></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="modal-ft" style="justify-content:space-between">
+      <button class="btn" id="cMat">取消</button>
+      <button class="btn primary" id="btnSaveMat">保存物料设置</button>
+    </div>
+  </div>
+</div>
+
+<!-- 库存历史 -->
+<div class="mask" id="maskStock">
+  <div class="modal">
+    <div class="modal-hd"><h3>即时库存历史</h3><button id="xStock">&times;</button></div>
+    <div class="modal-bd" id="stockHistoryBd"></div>
+  </div>
+</div>
+
+<!-- 标记发货 / 标记入库 数量确认 -->
+<div class="mask" id="maskMove">
+  <div class="modal" style="max-width:430px">
+    <div class="modal-hd"><h3 id="mvTitle">标记发货</h3><button id="xMove">&times;</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="mvId"><input type="hidden" id="mvMode">
+      <div class="tip" id="mvInfo" style="margin-bottom:14px"></div>
+      <div class="fld">
+        <label id="mvDateLabel">日期</label>
+        <input class="inp" type="date" id="mvDate">
+      </div>
+      <div class="fld">
+        <label id="mvQty1Label">数量</label>
+        <input class="inp big num" type="number" id="mvQty1" min="0" step="1">
+      </div>
+      <div class="fld" id="mvQty2Box">
+        <label>不良数量</label>
+        <input class="inp big num" type="number" id="mvQty2" min="0" step="1" value="0">
+      </div>
+      <div class="tip" id="mvHint"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" id="cMove">取消</button>
+      <button class="btn primary" id="okMove">确认</button>
+    </div>
+  </div>
+</div>
+
+<!-- 新增 / 编辑批次 -->
+<div class="mask" id="maskBatch">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-hd"><h3 id="mbTitle">新增批次</h3><button id="xBatch">&times;</button></div>
+    <div class="modal-bd">
+      <input type="hidden" id="mbId">
+      <div class="fld">
+        <label>物料编码</label>
+        <select id="mbMat" class="inp"></select>
+      </div>
+      <div class="grid2">
+        <div class="fld">
+          <label>发喷塑日期</label>
+          <input class="inp" type="date" id="mbSendDate">
+        </div>
+        <div class="fld">
+          <label>发喷塑数量</label>
+          <input class="inp big num" type="number" id="mbSendQty" min="0" step="1">
+        </div>
+      </div>
+      <div class="grid2" id="mbShipBox">
+        <div class="fld">
+          <label>实际发货日期</label>
+          <input class="inp" type="date" id="mbShipDate">
+        </div>
+        <div class="fld">
+          <label>发货数量</label>
+          <input class="inp big num" type="number" id="mbShipQty" min="0" step="1">
+        </div>
+      </div>
+      <div class="grid2">
+        <div class="fld">
+          <label>预计发货时间</label>
+          <input class="inp" type="date" id="mbEtaDate">
+        </div>
+        <div class="fld">
+          <label>备注</label>
+          <input class="inp" type="text" id="mbNote" placeholder="备注">
+        </div>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" id="cBatch">取消</button>
+      <button class="btn primary" id="okBatch">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 金蝶批量粘贴入库 -->
+<div class="mask" id="maskPaste">
+  <div class="modal" style="max-width:700px">
+    <div class="modal-hd"><h3>批量粘贴入库（金蝶）</h3><button id="xPaste">&times;</button></div>
+    <div class="modal-bd">
+      <div class="tip">从金蝶复制入库记录后粘贴到下面（支持 Tab / 空格 / 逗号分隔）。只要某一列里能识别到 <b>大黑 / 小黑 / 蓝色</b> 料别（或料号），以及入库数量和不良数量，就能自动归类。</div>
+      <textarea id="pasteIn" class="inp" rows="6" spellcheck="false" style="margin-top:11px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px"
+        placeholder="例：&#10;A	5000	50&#10;B	3000	12&#10;C	1800	0"></textarea>
+      <div style="display:flex;gap:12px;margin-top:11px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted)">
+        <span style="font-weight:700;color:var(--text)">列映射</span>
+        <label>料别 <select id="mapMat" class="inp inline-sel"></select></label>
+        <label>入库数量 <select id="mapRecv" class="inp inline-sel"></select></label>
+        <label>不良数量 <select id="mapDef" class="inp inline-sel"></select></label>
+      </div>
+      <div id="pastePreview"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn" id="cPaste">取消</button>
+      <button class="btn primary" id="okPaste">导入并入库</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<input type="file" id="fileIn" accept="application/json,.json" style="display:none">
+
+<script>
+(function(){
+'use strict';
+
+/* ============ 常量 / 数据 ============ */
+var LS_KEY='xinjiu_dash_v1';
+var MATS=['A','B','C'];
+var MAT_COLOR={A:'#ea580c',B:'#0d9488',C:'#2563eb'};
+var MAT_DEF={A:{code:'LSMZSS-BL(P)',name:'大黑'},B:{code:'LSMZSS-01-BL(P)',name:'小黑'},C:{code:'LSYXSS-BU(D)',name:'蓝色'}};
+function matInfo(m){
+  var c=(D&&D.codes&&D.codes[m])||{};
+  return {code:c.code||(MAT_DEF[m]&&MAT_DEF[m].code)||'', name:c.name||(MAT_DEF[m]&&MAT_DEF[m].name)||m};
+}
+function mname(m){ return matInfo(m).name }
+function mcode(m){ return matInfo(m).code }
+function matOpt(m,sel){ return '<option value="'+m+'"'+(sel?' selected':'')+'>'+mname(m)+' '+mcode(m)+'</option>' }
+function matTag(m){ return '<span class="mtag" data-m="'+m+'" style="background:'+MAT_COLOR[m]+'" title="'+mcode(m)+'">'+mcode(m)+'</span>' }
+function matShortTag(m){ return '<span class="mtag" style="background:'+MAT_COLOR[m]+'" title="'+mcode(m)+'">'+mname(m)+'</span>' }
+var $ = function(s){return document.querySelector(s)};
+var $$ = function(s){return Array.prototype.slice.call(document.querySelectorAll(s))};
+
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+function todayStr(d){d=d||new Date();return ymd(d)}
+function ymd(d){
+  var y=d.getFullYear(),m=d.getMonth()+1,dd=d.getDate();
+  return y+'-'+(m<10?'0':'')+m+'-'+(dd<10?'0':'')+dd;
+}
+function parseD(s){ if(!s) return null; var p=String(s).split('-'); if(p.length<3) return null; var d=new Date(+p[0],+p[1]-1,+p[2]); return isNaN(d)?null:d }
+function addDays(s,n){ var d=parseD(s); if(!d) return ''; d.setDate(d.getDate()+n); return ymd(d) }
+function n(v){ v=parseFloat(v); return isNaN(v)?0:v }
+function fmt(v){ return (Math.round(v)||0).toLocaleString('zh-CN') }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]}) }
+
+function defaultData(){
+  var codes={}; MATS.forEach(function(m){ codes[m]={code:MAT_DEF[m].code,name:MAT_DEF[m].name} });
+  return {
+    v:1, updatedAt:new Date().toISOString(),
+    cycleDays:4,
+    codes:codes,
+    targets:{A:10000,B:10000,C:6000},
+    orders:{A:10000,B:10000,C:6000},
+    batches:[],
+    stockLog:[]
+  };
+}
+
+var D = load();
+var CFG = loadCfg();
+var stockEditing = false;
+/* 只读（供应商）模式：链接带 ?v=view */
+var IS_VIEW=/[?&]v=view\b/.test(location.search)||/[#&]v=view\b/.test(location.hash);
+var viewBadgeAdded=false;
+function applyViewMode(){
+  if(!IS_VIEW) return;
+  document.body.classList.add('viewmode');
+  ['stkDate','stkA','stkB','stkC'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.disabled=true;
+  });
+  ['btnStockAction','btnPaste','btnMatSettings','btnSettings','btnManualSync'].forEach(function(id){
+    var el=document.getElementById(id); if(el) el.style.display='none';
+  });
+  var hd=document.querySelector('.hd-actions');
+  if(hd&&!viewBadgeAdded){
+    viewBadgeAdded=true;
+    var s=document.createElement('span');
+    s.className='sync-badge';
+    s.style.cssText='background:#eef2ff;border-color:#c7d2fe;color:#4338ca';
+    s.innerHTML='<span class="dot on"></span>供应商模式 · 可填写 / 新增批次 / 标记发货';
+    hd.insertBefore(s,hd.firstChild);
+  }
+}
+
+function load(){
+  try{
+    var raw=localStorage.getItem(LS_KEY);
+    if(!raw) return defaultData();
+    var o=JSON.parse(raw), d=defaultData();
+    for(var k in d){ if(!(k in o)) o[k]=d[k]; }
+    if(!o.targets) o.targets=d.targets;
+    if(!Array.isArray(o.batches)) o.batches=[];
+    if(!Array.isArray(o.stockLog)) o.stockLog=[];
+    return o;
+  }catch(e){ return defaultData() }
+}
+function save(){
+  try{
+    /* 每次写入前，若旧版本含真实业务数据（批次/库存），先留一份备份，供误覆盖后恢复 */
+    var prev=localStorage.getItem(LS_KEY);
+    if(prev){
+      try{
+        var p=JSON.parse(prev);
+        if((p.batches&&p.batches.length)||(p.stockLog&&p.stockLog.length)){
+          localStorage.setItem(LS_KEY+'_bak',prev);
+          localStorage.setItem(LS_KEY+'_bak_at',new Date().toISOString());
+        }
+      }catch(e){}
+    }
+    localStorage.setItem(LS_KEY, JSON.stringify(D));
+  }catch(e){}
+}
+function hasBak(){
+  try{
+    var b=localStorage.getItem(LS_KEY+'_bak');
+    if(!b) return null;
+    var o=JSON.parse(b);
+    if((o.batches&&o.batches.length)||(o.stockLog&&o.stockLog.length)) return o;
+  }catch(e){}
+  return null;
+}
+function loadCfg(){
+  try{ return JSON.parse(localStorage.getItem(LS_KEY+'_cfg'))||{} }catch(e){ return {} }
+}
+function saveCfg(){ try{ localStorage.setItem(LS_KEY+'_cfg', JSON.stringify(CFG)) }catch(e){} }
+
+/* ============ 云端同步 ============ */
+var CB_SDK='https://static.cloudbase.net/cloudbase-js-sdk/2.28.6/cloudbase.full.js';
+function loadScript(src){
+  return new Promise(function(res,rej){
+    if(document.querySelector('script[data-cbsdk="1"]')) return res();
+    var s=document.createElement('script');
+    s.src=src; s.setAttribute('data-cbsdk','1');
+    s.onload=function(){ res() };
+    s.onerror=function(){ rej(new Error('CloudBase SDK 加载失败，请检查网络')) };
+    document.head.appendChild(s);
+  });
+}
+function cbColl(){ return (CFG.cbColl||'xinjiu-dash').trim()||'xinjiu-dash' }
+
+var PROVIDERS={
+  cloudbase:{
+    name:'腾讯云开发 CloudBase（国内）',
+    _db:null,
+    init:function(){
+      var self=this;
+      if(self._db) return Promise.resolve(self._db);
+      if(!CFG.cbEnv) return Promise.reject(new Error('请先填写 CloudBase 环境 ID'));
+      return loadScript(CB_SDK).then(function(){
+        if(!window.cloudbase) throw new Error('CloudBase SDK 未加载成功');
+        var app=window.cloudbase.init({env:CFG.cbEnv, region:CFG.cbRegion||'ap-shanghai'});
+        var auth=app.auth({persistence:'local'});
+        return auth.signInAnonymously().catch(function(e){
+          throw new Error('CloudBase 匿名登录失败（请在控制台「登录授权」里开启匿名登录）：'+((e&&e.message)||e));
+        }).then(function(){ self._db=app.database(); return self._db });
+      }).catch(function(e){
+        var msg=(e&&e.message)||String(e);
+        if(/network request/i.test(msg)){
+          throw new Error(msg+'；可能是地域不匹配，或安全域名未配置。请检查：1) 控制台「概览」里的环境地域与页面设置中的地域一致；2) 控制台「环境配置 → 安全配置」里添加 '+location.origin+'；当前 '+self._ctx());
+        }
+        throw e;
+      });
+    },
+    _ctx:function(){ return 'env='+CFG.cbEnv+' region='+(CFG.cbRegion||'ap-shanghai')+' coll='+cbColl(); },
+    _netTip:function(){
+      return '；如提示 network request error，请到腾讯云控制台「环境配置 → 安全配置」把本网站域名 '+location.origin+' 加入安全域名白名单，并确认当前地域与 region 一致';
+    },
+    create:function(data){
+      var self=this;
+      return this.init().then(function(db){
+        return db.collection(cbColl()).doc('main').set({payload:data,updatedAt:new Date().toISOString()})
+          .then(function(){ return 'main' })
+          .catch(function(e){ throw new Error('写入失败（请检查集合是否存在、权限是否为「所有用户可读写」、安全域名是否已配置）：'+((e&&e.message)||e)+'；'+self._ctx()+self._netTip()) });
+      });
+    },
+    read:function(){
+      var self=this;
+      return this.init().then(function(db){
+        return db.collection(cbColl()).doc('main').get().then(function(r){
+          var d=(r&&r.data&&r.data[0])||(r&&r.data);
+          if(!d) throw new Error('云端暂无数据，请先用主链接保存一次');
+          return (d.payload&&d.payload.batches!==undefined)?d.payload:d;
+        });
+      }).catch(function(e){ throw new Error('读取失败：'+((e&&e.message)||e)+'；'+self._ctx()+self._netTip()) });
+    },
+    write:function(id,data){
+      var self=this;
+      return this.init().then(function(db){
+        return db.collection(cbColl()).doc('main').set({payload:data,updatedAt:data.updatedAt||new Date().toISOString()});
+      }).then(function(){ return true })
+      .catch(function(e){ throw new Error('上传失败：'+((e&&e.message)||e)+'；'+self._ctx()+self._netTip()) });
+    }
+  },
+  restful:{
+    name:'公共存储（免注册）',
+    create:function(data){
+      return fetch('https://api.restful-api.dev/objects',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'xinjiu-supply',data:data})})
+        .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json() })
+        .then(function(j){ var id=j&&j.id; if(!id) throw new Error('无 ID'); return id });
+    },
+    read:function(id){ return fetch('https://api.restful-api.dev/objects/'+id,{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json() }).then(function(j){ return (j&&j.data)||j }) },
+    write:function(id,data){ return fetch('https://api.restful-api.dev/objects/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:'xinjiu-supply',data:data})}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return true }) }
+  },
+  jsonbin:{
+    name:'JSONBin（需 Key）',
+    hdr:function(){ return {'Content-Type':'application/json','X-Master-Key':CFG.apiKey||''} },
+    create:function(data){
+      if(!CFG.apiKey) throw new Error('请填写 JSONBin 的 API Key');
+      return fetch('https://api.jsonbin.io/v3/b',{method:'POST',headers:this.hdr(),body:JSON.stringify(data)})
+        .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json() })
+        .then(function(j){ var id=j&&j.metadata&&j.metadata.id; if(!id) throw new Error('无 ID'); return id });
+    },
+    read:function(id){ return fetch('https://api.jsonbin.io/v3/b/'+id+'/latest',{cache:'no-store',headers:this.hdr()}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json() }).then(function(j){ return j&&j.record }) },
+    write:function(id,data){ return fetch('https://api.jsonbin.io/v3/b/'+id,{method:'PUT',headers:this.hdr(),body:JSON.stringify(data)}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return true }) }
+  },
+  jsonblob:{
+    name:'JSONBlob',
+    create:function(data){
+      return fetch('https://jsonblob.com/api/jsonBlob',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(data)})
+        .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status);
+          var loc=r.headers.get('Location')||''; var id=loc.split('/').pop();
+          if(!id) throw new Error('未返回 ID'); return id; });
+    },
+    read:function(id){ return fetch('https://jsonblob.com/api/jsonBlob/'+id,{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json() }) },
+    write:function(id,data){ return fetch('https://jsonblob.com/api/jsonBlob/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return true }) }
+  },
+  jsonstorage:{
+    name:'JSONStorage',
+    create:function(data){
+      return fetch('https://api.jsonstorage.net/create?json='+encodeURIComponent(JSON.stringify(data)))
+        .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json() })
+        .then(function(j){ var k=(j&&j.key)||((j&&j.uri||'').split('/').pop()); if(!k) throw new Error('未返回 key'); return k });
+    },
+    read:function(id){ return fetch('https://api.jsonstorage.net/'+id,{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json() }) },
+    write:function(id,data){ return fetch('https://api.jsonstorage.net/'+id,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return true }) }
+  },
+  github:{
+    name:'GitHub Gist（免费·需 Token）',
+    _file:'xinjiu-dash.json',
+    _hdr:function(){ return CFG.ghToken ? {'Authorization':'Bearer '+CFG.ghToken,'Accept':'application/vnd.github+json','Content-Type':'application/json'} : {'Accept':'application/vnd.github+json'} },
+    _parse:function(j){
+      var f=j&&j.files&&j.files[this._file];
+      if(!f) throw new Error('云端文档无数据文件，可能 Gist ID 不正确');
+      try{ return JSON.parse(f.content) }catch(e){ throw new Error('云端数据解析失败') }
+    },
+    create:function(data){
+      if(!CFG.ghToken) throw new Error('请填写 GitHub Token');
+      var body={ public:true, description:'xinjiu-supply-dashboard', files:{} };
+      body.files[this._file]={ content:JSON.stringify(data) };
+      return fetch('https://api.github.com/gists',{method:'POST',headers:this._hdr(),body:JSON.stringify(body)})
+        .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.message||('HTTP '+r.status)); return j }) })
+        .then(function(j){ if(!j.id) throw new Error('GitHub 未返回 ID'); return j.id });
+    },
+    read:function(id){
+      return fetch('https://api.github.com/gists/'+id,{cache:'no-store',headers:this._hdr()})
+        .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.message||('HTTP '+r.status)); return j }) })
+        .then(this._parse.bind(this));
+    },
+    write:function(id,data){
+      if(!CFG.ghToken) throw new Error('请填写 GitHub Token');
+      var body={ files:{} }; body.files[this._file]={ content:JSON.stringify(data) };
+      return fetch('https://api.github.com/gists/'+id,{method:'PATCH',headers:this._hdr(),body:JSON.stringify(body)})
+        .then(function(r){ return r.json().then(function(j){ if(!r.ok) throw new Error(j.message||('HTTP '+r.status)); return true }) });
+    }
+  },
+  custom:{
+    name:'自定义',
+    create:function(data){
+      var w=CFG.cuWrite; if(!w) throw new Error('请填写自定义写入地址');
+      return fetch(w,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})
+        .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return 'custom' });
+    },
+    read:function(){ var u=CFG.cuRead; if(!u) throw new Error('请填写自定义读取地址');
+      return fetch(u,{cache:'no-store'}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json() }) },
+    write:function(id,data){ var w=CFG.cuWrite; if(!w) throw new Error('请填写自定义写入地址');
+      return fetch(w,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)}).then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return true }) }
+  }
+};
+
+var syncState={ok:false,msg:'本地模式',busy:false,dirty:false};
+
+function prov(){ return PROVIDERS[CFG.provider] || PROVIDERS.restful }
+
+function setSync(cls,msg){
+  syncState.msg=msg; syncState.ok=(cls==='on');
+  var dot=$('#syncDot'); if(!dot) return;
+  dot.className='dot'+(cls?' '+cls:'');
+  $('#syncTxt').textContent=msg;
+}
+
+function cloudPull(silent){
+  if(!CFG.cloudId) return Promise.resolve(false);
+  if(syncState.busy) return Promise.resolve(false);
+  syncState.busy=true; setSync('load','同步中…');
+  return prov().read(CFG.cloudId).then(function(remote){
+    remote=remote||{};
+    var rt=remote&&remote.updatedAt?new Date(remote.updatedAt).getTime():0;
+    var lt=D.updatedAt?new Date(D.updatedAt).getTime():0;
+    var localEmpty=(!D.batches||!D.batches.length)&&(!D.stockLog||!D.stockLog.length);
+    var remoteEmpty=(!remote.batches||!remote.batches.length)&&(!remote.stockLog||!remote.stockLog.length);
+    /* 重要保护：云端是空的而本机有数据时，绝不用云端空数据覆盖本机 */
+    if(remoteEmpty && !localEmpty){
+      syncState.busy=false;
+      setSync('on','云端为空 · 已保留本机');
+      if(!silent) toast('云端暂无数据，已保留本机数据');
+      if(CFG.autoSync) return cloudPush(true);
+      return false;
+    }
+    if(rt>lt || localEmpty){
+      if(!localEmpty && syncState.dirty && !confirm('云端数据比本机新。\n云端更新于 '+new Date(remote.updatedAt).toLocaleString('zh-CN')+
+        '\n本机更新于 '+new Date(D.updatedAt).toLocaleString('zh-CN')+'\n\n要用云端数据覆盖本机吗？（选「取消」则保留本机并上传覆盖云端）')){
+        syncState.dirty=false; syncState.busy=false; return cloudPush(true);
+      }
+      var d0=defaultData(); for(var k in d0){ if(!(k in remote)) remote[k]=d0[k] }
+      if(!remote.targets) remote.targets=d0.targets;
+      D=remote; save(); renderAll(); syncState.dirty=false;
+      setSync('on','已同步 · '+new Date().toTimeString().slice(0,5));
+      if(!silent) toast('已拉取云端最新数据');
+      return true;
+    }else if(syncState.dirty){
+      return cloudPush(true);
+    }else{
+      setSync('on','云端已连接 · '+new Date().toTimeString().slice(0,5));
+      return false;
+    }
+  }).catch(function(e){
+    setSync('err','云端连接失败');
+    if(!silent) toast('拉取失败：'+e.message);
+    return false;
+  }).then(function(v){ syncState.busy=false; return v });
+}
+
+function cloudPush(silent){
+  if(!CFG.cloudId) return Promise.resolve(false);
+  if(syncState.busy) return Promise.resolve(false);
+  syncState.busy=true; setSync('load','上传中…');
+  D.updatedAt=new Date().toISOString();
+  return prov().write(CFG.cloudId,D).then(function(){
+    save(); syncState.dirty=false;
+    setSync('on','已同步 · '+new Date().toTimeString().slice(0,5));
+    if(!silent) toast('已上传到云端');
+    return true;
+  }).catch(function(e){
+    setSync('err','上传失败');
+    if(!silent) toast('上传失败：'+e.message);
+    return false;
+  }).then(function(v){ syncState.busy=false; return v });
+}
+
+var pushTimer=null;
+function markDirty(){
+  syncState.dirty=true; save();
+  if(CFG.cloudId && CFG.autoSync){
+    clearTimeout(pushTimer);
+    pushTimer=setTimeout(function(){ cloudPush(true) },2500);
+  }
+}
+
+function tryCreate(order,i,firstErr){
+  if(i>=order.length){
+    setSync('err','云端不可用');
+    var msg=firstErr ? ('连接失败：'+firstErr) : '云端服务均不可用。请稍后再试，或先用「复制数据码」把数据发给对方';
+    toast(msg);
+    return;
+  }
+  var k=order[i], p=PROVIDERS[k];
+  if(!p) return tryCreate(order,i+1,firstErr);
+  setSync('load','连接 '+p.name+'…');
+  p.create(D).then(function(id){
+    CFG.provider=k; CFG.cloudId=id; saveCfg();
+    setSync('on','已连接 · '+p.name);
+    toast('云端空间创建成功（'+p.name+'）');
+    syncUrl(); fillSettings();
+  }).catch(function(e){
+    if(!firstErr) firstErr=(e&&e.message)||(e&&String(e))||'未知错误';
+    tryCreate(order,i+1,firstErr);
+  });
+}
+/* 把当前云端配置写进地址栏（?s=provider:ID），保留 v=view；
+   这样用户收藏/分享的就是带云端 ID 的永久链接，换部署域名也能恢复 */
+function syncUrl(){
+  if(!CFG.cloudId) return;
+  var p=new URLSearchParams(location.search);
+  p.set('s',(CFG.provider||'jsonblob')+':'+CFG.cloudId);
+  var ns='?'+p.toString();
+  history.replaceState(null,'',location.pathname+ns+location.hash);
+}
+function cloudCreate(){
+  applySettings(); /* 先把面板里的环境ID等参数保存到CFG */
+  var sel=$('#selProvider').value;
+  if(sel==='cloudbase' && !$('#cbEnv').value.trim()){
+    toast('请先填写 CloudBase 环境 ID，再点「保存设置」，然后创建云端空间');
+    setSync('err','缺少环境ID');
+    return;
+  }
+  if(sel==='github'){
+    if(!CFG.ghToken){
+      toast('请先填写 GitHub Token（选 GitHub 云端服务后出现的输入框），保存后再创建');
+      setSync('err','缺少 GitHub Token');
+      return;
+    }
+    if(CFG.ghGist || CFG.cloudId){
+      CFG.provider='github';
+      if(CFG.ghGist) CFG.cloudId=CFG.ghGist;
+      saveCfg(); setSync('on','已连接 · GitHub Gist');
+      toast('已连接 GitHub Gist'); fillSettings();
+      return;
+    }
+  }
+  var order=(sel==='auto') ? ['restful','jsonblob','jsonbin','custom'] : [sel];
+  tryCreate(order,0,null);
+}
+function testConn(){
+  var sel=$('#selProvider').value;
+  var order=(sel==='auto') ? ['restful','jsonblob'] : [sel];
+  var out=[], done=0;
+  $('#testOut').textContent='测试中…';
+  if(order.length===1 && order[0]==='cloudbase' && !$('#cbEnv').value.trim()){
+    $('#testOut').textContent='请先填写 CloudBase 环境 ID 并保存设置';
+    return;
+  }
+  if(order.length===1 && order[0]==='github'){
+    if(!$('#ghToken').value.trim()){ $('#testOut').textContent='请先填写 GitHub Token 并保存设置'; return; }
+    var gh={Authorization:'Bearer '+$('#ghToken').value.trim(),'Accept':'application/vnd.github+json'};
+    fetch('https://api.github.com/user',{headers:gh}).then(function(r){
+      if(r.ok) return 'GitHub Token 有效，连接成功';
+      return r.json().then(function(j){ return 'GitHub Token 无效：'+(j.message||('HTTP '+r.status)) }).catch(function(){ return 'GitHub Token 无效（HTTP '+r.status+'）' });
+    }).then(function(t){ $('#testOut').textContent=t }).catch(function(e){ $('#testOut').textContent='GitHub 测试失败：'+((e&&e.message)||e) });
+    return;
+  }
+  order.forEach(function(k){
+    if(k==='cloudbase'){
+      PROVIDERS.cloudbase.init()
+        .then(function(){ out.push(PROVIDERS.cloudbase.name.replace(/（.*）/,'')+' 可用') })
+        .catch(function(e){ out.push(PROVIDERS.cloudbase.name.replace(/（.*）/,'')+' 不可用 ('+((e&&e.message)||'未知')+')') })
+        .then(function(){ if(++done===order.length) $('#testOut').textContent=out.join(' · ') });
+      return;
+    }
+    PROVIDERS[k].create({probe:1})
+      .then(function(){ out.push(PROVIDERS[k].name.replace(/（.*）/,'')+' 可用') })
+      .catch(function(e){ out.push(PROVIDERS[k].name.replace(/（.*）/,'')+' 不可用 ('+((e&&e.message)||'未知')+')') })
+      .then(function(){ if(++done===order.length) $('#testOut').textContent=out.join(' · ') });
+  });
+}
+
+/* ============ 计算 ============ */
+function statusOf(b){
+  if(b.recvDate) return 'done';
+  if(b.shipDate) return 'transit';
+  if(b.sendDate) return 'coating';
+  return 'draft';
+}
+function weekRange(){
+  var d=new Date(); var day=(d.getDay()+6)%7;
+  var s=new Date(d); s.setDate(d.getDate()-day); s.setHours(0,0,0,0);
+  var e=new Date(s); e.setDate(s.getDate()+6); e.setHours(23,59,59,999);
+  return {s:s,e:e};
+}
+function inWeek(dateStr){
+  var d=parseD(dateStr); if(!d) return false;
+  var w=weekRange(); return d>=w.s && d<=w.e;
+}
+function latestStock(){
+  var log=(D.stockLog||[]).slice().sort(function(a,b){ return a.date<b.date?-1:1 });
+  return log.length?log[log.length-1]:{date:'',A:0,B:0,C:0};
+}
+function calc(){
+  var res={};
+  MATS.forEach(function(m){ res[m]={coating:0,transit:0,stock:0,total:0,weekShip:0,weekRecv:0,recv:0,defect:0,coatN:0,transitN:0,overdue:0} });
+  (D.batches||[]).forEach(function(b){
+    var m=res[b.m]; if(!m) return;
+    var st=statusOf(b);
+    if(st==='coating'){ m.coating+=n(b.sendQty); m.coatN++; if(b.etaDate&&b.etaDate<todayStr()) m.overdue++; }
+    else if(st==='transit'){ m.transit+=n(b.shipQty)||n(b.sendQty); m.transitN++; }
+    if(b.shipDate && inWeek(b.shipDate)) m.weekShip+=n(b.shipQty)||n(b.sendQty);
+    if(b.recvDate){ m.recv+=n(b.recvQty); m.defect+=n(b.defectQty); if(inWeek(b.recvDate)) m.weekRecv+=n(b.recvQty); }
+  });
+  var ls=latestStock();
+  MATS.forEach(function(m){
+    res[m].stock=n(ls[m]);
+    res[m].total=res[m].coating+res[m].transit+res[m].stock;
+    res[m].target=n(D.targets[m]);
+    res[m].order=n((D.orders||{})[m])||res[m].target;
+    res[m].delivered=res[m].recv;
+    res[m].outstanding=Math.max(0,res[m].order-res[m].delivered);
+    res[m].gap=Math.max(0,res[m].target-res[m].weekShip);
+    res[m].pipe=res[m].coating+res[m].transit;
+    res[m].need=Math.max(0,res[m].target-res[m].total);
+    res[m].rate=res[m].target?Math.min(1,res[m].weekShip/res[m].target):0;
+    res[m].defrate=(res[m].recv+res[m].defect)>0?res[m].defect/(res[m].recv+res[m].defect):0;
+    res[m].urgency=res[m].gap/ Math.max(1,res[m].total);
+  });
+  return res;
+}
+
+/* ============ 渲染 ============ */
+var curTab='coating';
+
+function renderCards(){
+  var c=calc();
+  var html=MATS.map(function(m){
+    var r=c[m], col=MAT_COLOR[m];
+    var pct=Math.round(r.rate*100);
+    var st,cls;
+    if(r.total>=r.target){ st='充足'; cls='ok' }
+    else if(r.total>=r.target*0.5){ st='偏紧'; cls='warn' }
+    else { st='告急'; cls='bad' }
+    if(r.overdue>0){ st='喷塑逾期'; cls='bad' }
+    var advTxt, advCls='';
+    if(r.need<=0){ advTxt='管道量已覆盖周目标，<b>暂不需发喷塑</b>'; }
+    else if(r.need<r.gap){ advTxt='建议发 <b>'+fmt(r.need)+'</b> 个去喷塑，另有 <b>'+fmt(r.gap-r.need)+'</b> 个在管道/库存待发'; }
+    else { advTxt='建议发 <b>'+fmt(r.need)+'</b> 个去喷塑'; }
+    advCls=(r.total<r.target*0.35?' urgent':'');
+    return '<div class="mcard" style="--mc:'+col+'">'+
+      '<div class="in">'+
+        '<div class="mc-top">'+
+          '<div class="chip">'+mname(m)+'</div>'+
+          '<div style="flex:1;min-width:0">'+
+            '<div class="mc-coderow">'+
+              '<div class="mc-code" style="font-weight:800;font-size:17px;letter-spacing:-.01em;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="'+esc(mcode(m))+'">'+esc(mcode(m))+'</div>'+
+              '<button class="copybtn" data-code="'+esc(mcode(m))+'" title="复制料号">'+copyIcon()+'</button>'+
+            '</div>'+
+            '<div class="mc-sub">'+mname(m)+' · 周目标 '+fmt(r.target)+' 个</div>'+
+          '</div>'+
+          '<span class="pill '+cls+'">'+st+'</span>'+
+        '</div>'+
+        '<div class="bignum num '+cls+'" id="big'+m+'">'+fmt(r.total)+'</div>'+
+        '<div class="biglabel">当前总量（喷塑中 + 在途 + 库存）</div>'+
+        '<div class="brk">'+
+          '<div><div class="k"><i style="background:'+col+';opacity:.45"></i>喷塑中</div><div class="v num" style="color:'+col+'">'+fmt(r.coating)+'</div></div>'+
+          '<div><div class="k"><i style="background:'+col+';opacity:.75"></i>发货在途</div><div class="v num" style="color:'+col+'">'+fmt(r.transit)+'</div></div>'+
+          '<div><div class="k"><i style="background:'+col+'"></i>即时库存</div><div class="v num" style="color:'+col+'">'+fmt(r.stock)+'</div></div>'+
+        '</div>'+
+        '<div class="prow"><span>本周已发货</span><b class="num">'+fmt(r.weekShip)+' <span style="color:var(--muted2);font-weight:600">/ '+fmt(r.target)+'</span></b></div>'+
+        '<div class="pbar"><i style="width:'+pct+'%"></i></div>'+
+        '<div class="pfoot"><span>达成 '+pct+'%</span><span>缺口 '+fmt(r.gap)+' 个</span></div>'+
+        '<div class="mini3">'+
+          '<div><span>订单总量</span><b class="num" style="color:'+col+'">'+fmt(r.order)+'</b></div>'+
+          '<div><span>已交总量</span><b class="num" style="color:var(--ok)">'+fmt(r.delivered)+'</b></div>'+
+          '<div><span>未清总量</span><b class="num" style="color:'+(r.outstanding>0?'var(--bad)':'var(--muted2)')+'">'+fmt(r.outstanding)+'</b></div>'+
+        '</div>'+
+        '<div class="advice'+advCls+'"><span>'+(r.need>0?'▸':'·')+'</span><span>'+advTxt+'</span></div>'+
+      '</div></div>';
+  }).join('');
+  $('#cards').innerHTML=html;
+}
+
+function renderTabs(){
+  var all=D.batches.length, coat=0,tran=0,done=0;
+  D.batches.forEach(function(b){ var s=statusOf(b); if(s==='coating'||s==='draft')coat++; else if(s==='transit')tran++; else if(s==='done')done++ });
+  var defs=[['coating','喷塑中',coat],['transit','发货在途',tran],['done','入库',done],['all','全部',all]];
+  $('#tabs').innerHTML=defs.map(function(d){
+    return '<button class="tab'+(curTab===d[0]?' on':'')+'" data-tab="'+d[0]+'">'+d[1]+'<span class="ct">'+d[2]+'</span></button>';
+  }).join('');
+  $$('#tabs .tab').forEach(function(b){ b.onclick=function(){ curTab=b.getAttribute('data-tab'); renderTabs(); renderTable() } });
+  var st=STAGE[curTab]||STAGE.all;
+  $('#addLbl').textContent=st.addLabel+'：';
+  $('#btnPaste').style.display=(curTab==='done')?'inline-block':'none';
+  renderAddGrp();
+  refreshAddGate();
+}
+
+/* 供应商模式下，仅放开「喷塑中 / 发货在途」两页的新增按钮；入库、全部页隐藏 */
+function refreshAddGate(){
+  var el=document.getElementById('addGrp'); if(!el) return;
+  var allow = !IS_VIEW || (curTab==='coating'||curTab==='transit');
+  el.style.display = allow ? '' : 'none';
+}
+
+/* 每个板块对应的新增语义：新增的批次直接进入该阶段 */
+var STAGE={
+  coating:{addLabel:'新增喷塑批次',focus:'sendQty',
+    make:function(m,today){ return {id:uid(),m:m,sendDate:today,sendQty:0,etaDate:D.cycleDays?addDays(today,n(D.cycleDays)):'',shipDate:'',shipQty:0,recvDate:'',recvQty:0,defectQty:0,note:''} },
+    tip:function(m){ return '已新增 '+mname(m)+' 喷塑批次，请填发喷塑数量' }},
+  transit:{addLabel:'新增发货在途',focus:'shipQty',
+    make:function(m,today){ return {id:uid(),m:m,sendDate:today,sendQty:0,etaDate:'',shipDate:today,shipQty:0,recvDate:'',recvQty:0,defectQty:0,note:''} },
+    tip:function(m){ return '已新增 '+mname(m)+' 在途记录，请填发货数量' }},
+  done:{addLabel:'新增入库记录',focus:'recvQty',
+    make:function(m,today){ return {id:uid(),m:m,sendDate:today,sendQty:0,etaDate:'',shipDate:today,shipQty:0,recvDate:today,recvQty:0,defectQty:0,note:''} },
+    tip:function(m){ return '已新增 '+mname(m)+' 入库记录，请填合格数与不良数' }},
+  all:{addLabel:'新增喷塑批次',focus:'sendQty',
+    make:function(m,today){ return {id:uid(),m:m,sendDate:today,sendQty:0,etaDate:D.cycleDays?addDays(today,n(D.cycleDays)):'',shipDate:'',shipQty:0,recvDate:'',recvQty:0,defectQty:0,note:''} },
+    tip:function(m){ return '已新增 '+mname(m)+' 喷塑批次' }}
+};
+
+function statInfo(b){
+  var st=statusOf(b);
+  var txt={draft:'待发喷塑',coating:'喷塑中',transit:'在途',done:'已入库'}[st];
+  var cls=st;
+  if(st==='coating'&&b.etaDate&&b.etaDate<todayStr()){ txt='喷塑逾期'; cls='overdue' }
+  var dr='';
+  if(b.recvDate||n(b.defectQty)>0){
+    var t=n(b.recvQty)+n(b.defectQty);
+    dr=t>0?(n(b.defectQty)/t*100).toFixed(1)+'%':'—';
+  }
+  return {txt:txt,cls:cls,dr:dr};
+}
+
+function cellRO(v,late){
+  return '<span class="ro'+(late?' late':'')+'">'+esc(v)+'</span>';
+}
+
+/* 阶段1：喷塑中 —— 只读显示，编辑走弹窗 */
+function rowCoating(b){
+  var si=statInfo(b);
+  return '<tr>'+
+    '<td>'+matTag(b.m)+'</td>'+
+    '<td>'+cellRO(b.sendDate||'—')+'</td>'+
+    '<td>'+cellRO(fmt(n(b.sendQty)))+'</td>'+
+    '<td>'+cellRO(b.etaDate||'—')+'</td>'+
+    '<td><span class="st '+si.cls+'" data-st="1">'+si.txt+'</span></td>'+
+    '<td>'+cellRO(b.note||'—')+'</td>'+
+    '<td><button class="go" data-go="'+b.id+'" title="喷塑完成发货，批次转入在途">标记发货</button></td>'+
+    '<td><button class="edit" data-edit="'+b.id+'" title="编辑该批次">✎</button></td>'+
+    '<td><button class="del" data-del="'+b.id+'" title="删除该批次">&times;</button></td>'+
+  '</tr>';
+}
+
+/* 阶段2：在途 —— 只读显示，编辑走弹窗 */
+function rowTransit(b){
+  var si=statInfo(b);
+  var late=b.etaDate&&b.etaDate<todayStr();
+  return '<tr>'+
+    '<td>'+matTag(b.m)+'</td>'+
+    '<td>'+cellRO(b.sendDate||'—')+'</td>'+
+    '<td>'+cellRO(fmt(n(b.sendQty)))+'</td>'+
+    '<td>'+cellRO(b.shipDate||'—')+'</td>'+
+    '<td>'+cellRO(fmt(n(b.shipQty)))+'</td>'+
+    '<td>'+cellRO(b.etaDate||'—',late)+'</td>'+
+    '<td><span class="st '+si.cls+'" data-st="1">'+si.txt+'</span></td>'+
+    '<td>'+cellRO(b.note||'—')+'</td>'+
+    '<td><button class="go" data-recv="'+b.id+'" title="到货检验完成，批次转入已入库">标记入库</button></td>'+
+    '<td><button class="edit" data-edit="'+b.id+'" title="编辑该批次">✎</button></td>'+
+    '<td><button class="del" data-del="'+b.id+'" title="删除该批次">&times;</button></td>'+
+  '</tr>';
+}
+
+/* 阶段3：已入库 —— 填入库检验信息，发货信息只读 */
+function rowDone(b){
+  function cell(type,key,cls2,ph){
+    return '<input class="cell '+cls2+'" type="'+type+'" data-id="'+b.id+'" data-k="'+key+'" value="'+esc(b[key]==null?'':b[key])+'"'+(ph?' placeholder="'+ph+'"':'')+(type==='number'?' min="0" step="1"':'')+'>';
+  }
+  var si=statInfo(b);
+  return '<tr>'+
+    '<td>'+matTag(b.m)+'</td>'+
+    '<td>'+cellRO(b.shipDate||'—')+'</td>'+
+    '<td>'+cellRO(fmt(n(b.shipQty)||n(b.sendQty)))+'</td>'+
+    '<td>'+cell('date','recvDate','w-date')+'</td>'+
+    '<td>'+cell('number','recvQty','w-qty','0')+'</td>'+
+    '<td>'+cell('number','defectQty','w-qty','0')+'</td>'+
+    '<td class="num" data-dr="1" style="color:'+(parseFloat(si.dr)>3?'var(--bad)':'var(--muted)')+';font-weight:650">'+(si.dr||'—')+'</td>'+
+    '<td><span class="st '+si.cls+'" data-st="1">'+si.txt+'</span></td>'+
+    '<td>'+cell('text','note','w-note','备注')+'</td>'+
+    '<td><button class="del" data-del="'+b.id+'" title="删除该批次">&times;</button></td>'+
+  '</tr>';
+}
+
+/* 全部：全字段汇总视图 */
+function rowAll(b){
+  function cell(type,key,cls2,ph){
+    return '<input class="cell '+cls2+'" type="'+type+'" data-id="'+b.id+'" data-k="'+key+'" value="'+esc(b[key]==null?'':b[key])+'"'+(ph?' placeholder="'+ph+'"':'')+(type==='number'?' min="0" step="1"':'')+'>';
+  }
+  var si=statInfo(b);
+  return '<tr>'+
+    '<td><select class="cellsel" data-id="'+b.id+'" data-k="m" style="background:'+MAT_COLOR[b.m]+'">'+
+      MATS.map(function(x){ return '<option value="'+x+'"'+(b.m===x?' selected':'')+'>'+mcode(x)+'</option>' }).join('')+
+    '</select></td>'+
+    '<td>'+cell('date','sendDate','w-date')+'</td>'+
+    '<td>'+cell('number','sendQty','w-qty2','0')+'</td>'+
+    '<td>'+cell('date','etaDate','w-date')+'</td>'+
+    '<td>'+cell('date','shipDate','w-date')+'</td>'+
+    '<td>'+cell('number','shipQty','w-qty','0')+'</td>'+
+    '<td>'+cell('date','recvDate','w-date')+'</td>'+
+    '<td>'+cell('number','recvQty','w-qty','0')+'</td>'+
+    '<td>'+cell('number','defectQty','w-qty','0')+'</td>'+
+    '<td class="num" data-dr="1" style="color:'+(parseFloat(si.dr)>3?'var(--bad)':'var(--muted)')+';font-weight:650">'+(si.dr||'—')+'</td>'+
+    '<td><span class="st '+si.cls+'" data-st="1">'+si.txt+'</span></td>'+
+    '<td>'+cell('text','note','w-note','备注')+'</td>'+
+    '<td><button class="del" data-del="'+b.id+'" title="删除该批次">&times;</button></td>'+
+  '</tr>';
+}
+
+var TABLE_DEFS={
+  coating:{head:['物料编码','发喷塑日期','发喷塑数量','预计发货时间','状态','备注','标记发货','编辑',''],row:rowCoating,min:820},
+  transit:{head:['物料编码','发喷塑日期','发喷塑数量','实际发货日期','发货数量','预计发货时间','状态','备注','标记入库','编辑',''],row:rowTransit,min:1060},
+  done:{head:['物料编码','实际发货','发货数量','实际入库（填）','合格数量（填）','不良数量（填）','不良率','状态','备注',''],row:rowDone,min:940},
+  all:{head:['物料编码','发喷塑日期','发喷塑数量','预计发货时间','实际发货','发货数量','实际入库','合格数量','不良数量','不良率','状态','备注',''],row:rowAll,min:1000}
+};
+
+function renderTable(){
+  var def=TABLE_DEFS[curTab]||TABLE_DEFS.all;
+  var list=D.batches.slice().sort(function(a,b){
+    var ord={coating:0,transit:1,done:2,draft:3};
+    var d=ord[statusOf(a)]-ord[statusOf(b)]; if(d) return d;
+    return (b.sendDate||'')<(a.sendDate||'')?-1:1;
+  });
+  if(curTab==='coating') list=list.filter(function(b){ var s=statusOf(b); return s==='coating'||s==='draft' });
+  else if(curTab!=='all') list=list.filter(function(b){ return statusOf(b)===curTab });
+  $('#tbl').innerHTML='<thead><tr>'+def.head.map(function(h){
+      return '<th'+(h?'':' style="width:40px"')+'>'+h+'</th>';
+    }).join('')+'</tr></thead><tbody id="tbody">'+
+    list.map(function(b){ return def.row(b) }).join('')+'</tbody>';
+  $('#tbl').style.minWidth=def.min+'px';
+  $('#emptyTip').style.display=list.length?'none':'block';
+  bindCells();
+  $$('#tbody [data-go]').forEach(function(btn){
+    btn.onclick=function(){ openMove(btn.getAttribute('data-go'),'ship') };
+  });
+  $$('#tbody [data-recv]').forEach(function(btn){
+    btn.onclick=function(){ openMove(btn.getAttribute('data-recv'),'recv') };
+  });
+  $$('#tbody [data-del]').forEach(function(btn){
+    btn.onclick=function(){
+      if(!confirm('确认删除该批次？')) return;
+      D.batches=D.batches.filter(function(x){ return x.id!==btn.getAttribute('data-del') });
+      markDirty(); renderAll();
+    };
+  });
+  $$('#tbody [data-edit]').forEach(function(btn){
+    btn.onclick=function(){ openBatchEdit(btn.getAttribute('data-edit')) };
+  });
+  lockTable();
+}
+
+/* 供应商模式：所有行只读，通过编辑弹窗修改；隐藏删除与标记入库按钮 */
+function lockTable(){
+  if(!IS_VIEW) return;
+  $$('#tbody button[data-recv],#tbody button[data-del]').forEach(function(el){ el.style.display='none' });
+  $$('#tbody select.cellsel').forEach(function(el){ el.disabled=true });
+  $$('#tbody input.cell').forEach(function(el){ el.disabled=true });
+}
+
+function bindCells(){
+  $$('#tbody .cell, #tbody .cellsel').forEach(function(inp){
+    inp.addEventListener('change',function(){
+      var id=inp.getAttribute('data-id'), k=inp.getAttribute('data-k');
+      var b=D.batches.filter(function(x){ return x.id===id })[0]; if(!b) return;
+      b[k]=inp.type==='number'?n(inp.value):inp.value;
+      if(k==='sendDate' && b.sendDate && !b.etaDate && D.cycleDays){
+        b.etaDate=addDays(b.sendDate,n(D.cycleDays));
+        var e=inp.closest('tr').querySelector('[data-k=etaDate]'); if(e&&!e.value) e.value=b.etaDate;
+      }
+      if(k==='shipDate' && b.shipDate && !n(b.shipQty)){
+        b.shipQty=n(b.sendQty);
+        var sq=inp.closest('tr').querySelector('[data-k=shipQty]');
+        if(sq&&!n(sq.value)&&b.shipQty) sq.value=b.shipQty;
+      }
+      if(k==='recvDate' && b.recvDate && !n(b.recvQty)){
+        b.recvQty=n(b.shipQty)||n(b.sendQty);
+        var rq=inp.closest('tr').querySelector('[data-k=recvQty]');
+        if(rq&&!n(rq.value)&&b.recvQty) rq.value=b.recvQty;
+      }
+      markDirty();
+      if(k==='m'){ renderAll(); return }   /* 换物料需要重新排序/归类 */
+      var row=inp.closest('tr');
+      var si=statInfo(b);
+      var sEl=row.querySelector('[data-st]'); if(sEl){ sEl.className='st '+si.cls; sEl.textContent=si.txt }
+      var dEl=row.querySelector('[data-dr]');
+      if(dEl){ dEl.textContent=si.dr||'—'; dEl.style.color=parseFloat(si.dr)>3?'var(--bad)':'var(--muted)' }
+      renderCards(); renderTabs();
+    });
+  });
+}
+
+function renderStock(){
+  var today=todayStr();
+  var ls=latestStock();
+  if(!stockEditing){
+    if(ls.date) $('#stkDate').value=ls.date; else $('#stkDate').value=today;
+  }
+  var d=$('#stkDate').value;
+  var t=(D.stockLog||[]).filter(function(x){ return x.date===d })[0];
+  $('#stkA').value=t?t.A:''; $('#stkB').value=t?t.B:''; $('#stkC').value=t?t.C:'';
+  $('#stkA').disabled=!stockEditing; $('#stkB').disabled=!stockEditing; $('#stkC').disabled=!stockEditing;
+  $('#stkDate').disabled=!stockEditing;
+  $('#lblStkA').innerHTML='<span style="color:var(--a);font-weight:800">'+esc(mcode('A'))+'</span> '+esc(mname('A'));
+  $('#lblStkB').innerHTML='<span style="color:var(--b);font-weight:800">'+esc(mcode('B'))+'</span> '+esc(mname('B'));
+  $('#lblStkC').innerHTML='<span style="color:var(--c);font-weight:800">'+esc(mcode('C'))+'</span> '+esc(mname('C'));
+  var tip=$('#stockTip');
+  if(stockEditing){
+    tip.textContent='录入中… 选择日期并填写数量后点击「保存今日库存」';
+  }else if(t){
+    tip.textContent=d+' 已保存：'+mname('A')+' '+fmt(t.A)+' · '+mname('B')+' '+fmt(t.B)+' · '+mname('C')+' '+fmt(t.C);
+  }else if(ls.date){
+    tip.textContent='上次录入：'+ls.date+'  '+mname('A')+' '+fmt(ls.A)+' · '+mname('B')+' '+fmt(ls.B)+' · '+mname('C')+' '+fmt(ls.C);
+  }else tip.textContent='尚未录入过库存';
+  var btn=$('#btnStockAction');
+  btn.textContent=stockEditing?'保存今日库存':'新增即时库存';
+}
+
+function renderAll(){
+  renderCards(); renderTabs(); renderTable(); renderStock();
+  var empty=(!D.batches||!D.batches.length)&&(!D.stockLog||!D.stockLog.length);
+  var g=$('#guide'); if(g) g.style.display=empty?'block':'none';
+}
+
+/* ============ 交互 ============ */
+function renderAddGrp(){
+  $('#addGrp').innerHTML=MATS.map(function(m){
+    return '<button data-add="'+m+'" style="color:'+MAT_COLOR[m]+'" title="'+mcode(m)+'"><span class="aplus">+</span><span class="atxt">'+mname(m)+' <span style="opacity:.6;font-weight:600">'+mcode(m)+'</span></span></button>';
+  }).join('');
+}
+$('#addGrp').addEventListener('click',function(e){
+  var btn=e.target.closest('[data-add]'); if(!btn) return;
+  if(IS_VIEW && curTab!=='coating' && curTab!=='transit'){ toast('供应商模式：仅可在「喷塑中 / 发货在途」页新增，入库页不可新增'); return; }
+  var m=btn.getAttribute('data-add');
+  if(curTab==='coating' || curTab==='transit'){
+    openBatchAdd(m);
+  }else{
+    var st=STAGE[curTab]||STAGE.coating;
+    var b=st.make(m,todayStr());
+    D.batches.unshift(b); markDirty(); renderTabs(); renderTable();
+    var first=$$('#tbody tr')[0];
+    if(first&&first.scrollIntoView) first.scrollIntoView({block:'center'});
+    var q=first&&first.querySelector('[data-k='+st.focus+']'); if(q) q.focus();
+    toast(st.tip(m));
+  }
+});
+
+/* ============ 新增 / 编辑批次弹窗 ============ */
+function refreshMbMat(sel,b){
+  sel.innerHTML=MATS.map(function(m){ return '<option value="'+m+'">'+mcode(m)+'（'+mname(m)+'）</option>' }).join('');
+  if(b) sel.value=b.m; else if(MATS[0]) sel.value=MATS[0];
+}
+function mbShowShip(show){ $('#mbShipBox').style.display=show?'':'none' }
+function openBatchAdd(m){
+  $('#mbTitle').textContent='新增批次 · '+mcode(m)+'（'+mname(m)+'）';
+  $('#mbId').value='';
+  refreshMbMat($('#mbMat'),null);
+  $('#mbMat').value=m;
+  $('#mbMat').disabled=true;
+  var t=todayStr();
+  $('#mbSendDate').value=t;
+  $('#mbSendQty').value='';
+  $('#mbShipDate').value='';
+  $('#mbShipQty').value='';
+  $('#mbEtaDate').value=D.cycleDays?addDays(t,n(D.cycleDays)):'';
+  $('#mbNote').value='';
+  mbShowShip(curTab==='transit');
+  $('#maskBatch').classList.add('on');
+  setTimeout(function(){ try{ $('#mbSendQty').focus() }catch(e){} },60);
+}
+function openBatchEdit(id){
+  var b=D.batches.filter(function(x){ return x.id===id })[0]; if(!b) return;
+  $('#mbTitle').textContent='编辑批次 · '+mname(b.m)+'（'+mcode(b.m)+'）';
+  $('#mbId').value=id;
+  refreshMbMat($('#mbMat'),b);
+  $('#mbMat').disabled=true;
+  $('#mbSendDate').value=b.sendDate||'';
+  $('#mbSendQty').value=b.sendQty==null?'':b.sendQty;
+  $('#mbShipDate').value=b.shipDate||'';
+  $('#mbShipQty').value=b.shipQty==null?'':b.shipQty;
+  $('#mbEtaDate').value=b.etaDate||'';
+  $('#mbNote').value=b.note||'';
+  mbShowShip(!!b.shipDate || curTab==='transit');
+  $('#maskBatch').classList.add('on');
+}
+function closeBatch(){ $('#maskBatch').classList.remove('on') }
+function saveBatch(){
+  var id=$('#mbId').value;
+  var m=$('#mbMat').value;
+  var sendDate=$('#mbSendDate').value;
+  var sendQty=n($('#mbSendQty').value);
+  var shipDate=$('#mbShipDate').value;
+  var shipQty=n($('#mbShipQty').value);
+  var etaDate=$('#mbEtaDate').value;
+  var note=$('#mbNote').value;
+  if(!m){ toast('请选择物料'); return }
+  if(!sendDate){ toast('请填写发喷塑日期'); return }
+  if(sendQty<=0){ toast('发喷塑数量必须大于 0'); return }
+  if(!etaDate && sendDate && D.cycleDays){ etaDate=addDays(sendDate,n(D.cycleDays)) }
+  var showShip=$('#mbShipBox').style.display!=='none';
+  if(showShip){
+    if(!shipDate){ toast('请填写实际发货日期'); return }
+    if(shipQty<=0){ toast('发货数量必须大于 0'); return }
+    if(shipQty>sendQty){ toast('发货数量不能大于发喷塑数量'); return }
+  }
+  if(id){
+    var b=D.batches.filter(function(x){ return x.id===id })[0]; if(!b) return;
+    b.m=m; b.sendDate=sendDate; b.sendQty=sendQty; b.etaDate=etaDate; b.note=note;
+    if(showShip){ b.shipDate=shipDate; b.shipQty=shipQty }
+  }else{
+    var st=STAGE[curTab]||STAGE.coating;
+    var b=st.make(m,sendDate);
+    b.sendQty=sendQty; b.etaDate=etaDate; b.note=note;
+    if(showShip){ b.shipDate=shipDate; b.shipQty=shipQty }
+    D.batches.unshift(b);
+  }
+  closeBatch(); markDirty(); renderAll();
+  toast(id?'批次已更新':'批次已新增');
+}
+$('#xBatch').onclick=closeBatch;
+$('#cBatch').onclick=closeBatch;
+$('#maskBatch').addEventListener('click',function(e){ if(e.target===this) closeBatch() });
+$('#okBatch').onclick=saveBatch;
+
+/* ============ 标记发货 / 标记入库（数量确认） ============ */
+function openMove(id,mode){
+  if(IS_VIEW && mode==='recv'){ toast('供应商模式下不能标记入库'); return; }
+  var b=D.batches.filter(function(x){ return x.id===id })[0]; if(!b) return;
+  var ship=(mode==='ship');
+  $('#mvId').value=id; $('#mvMode').value=mode;
+  $('#mvTitle').textContent=(ship?'标记发货 · ':'标记入库 · ')+mname(b.m)+'（'+mcode(b.m)+'）';
+  $('#mvInfo').innerHTML=ship
+    ? '发喷塑 <b>'+fmt(n(b.sendQty))+'</b> 个（'+esc(b.sendDate||'—')+'）'
+    : '发货 <b>'+fmt(n(b.shipQty)||n(b.sendQty))+'</b> 个（'+esc(b.shipDate||'—')+'）';
+  $('#mvDateLabel').textContent=ship?'实际发货日期':'实际入库日期';
+  $('#mvDate').value=todayStr();
+  $('#mvQty1Label').textContent=ship?'实际发货数量':'合格入库数量';
+  $('#mvQty1').value=ship?n(b.sendQty):(n(b.shipQty)||n(b.sendQty));
+  $('#mvQty2Box').style.display=ship?'none':'block';
+  $('#mvQty2').value=0;
+  $('#mvHint').innerHTML=ship
+    ? '实际发货数量可能<b>少于</b>喷塑数量（抽检扣留、损耗等），请核对后确认。'
+    : '合格数量 + 不良数量 = 本次实际收货数，不良率自动计算。';
+  $('#maskMove').classList.add('on');
+  setTimeout(function(){ try{ $('#mvQty1').focus(); $('#mvQty1').select() }catch(e){ } },60);
+}
+$('#okMove').onclick=function(){
+  var id=$('#mvId').value, mode=$('#mvMode').value;
+  if(IS_VIEW && mode==='recv'){ toast('供应商模式下不能标记入库'); $('#maskMove').classList.remove('on'); return; }
+  var b=D.batches.filter(function(x){ return x.id===id })[0]; if(!b) return;
+  var date=$('#mvDate').value||todayStr();
+  var q1=n($('#mvQty1').value), q2=n($('#mvQty2').value);
+  if(mode==='ship'){
+    if(!b.sendDate) b.sendDate=date;
+    b.shipDate=date; b.shipQty=q1;
+  }else{
+    if(!b.shipDate) b.shipDate=date;
+    b.recvDate=date; b.recvQty=q1; b.defectQty=q2;
+  }
+  $('#maskMove').classList.remove('on');
+  markDirty(); curTab=(mode==='ship')?'transit':'done'; renderAll();
+  toast(mode==='ship'?('已登记发货 '+fmt(q1)+' 个'):('已登记入库：合格 '+fmt(q1)+' · 不良 '+fmt(q2)));
+};
+$('#xMove').onclick=function(){ $('#maskMove').classList.remove('on') };
+$('#cMove').onclick=function(){ $('#maskMove').classList.remove('on') };
+$('#maskMove').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('on') });
+
+/* ============ 金蝶批量粘贴入库 ============ */
+var P={grid:[],cols:0};
+function splitRow(line){
+  var t=String(line).replace(/\r/g,'').trim(), a;
+  if(t.indexOf('\t')>=0) a=t.split('\t');
+  else { a=t.split(/\s{2,}/); if(a.length===1) a=t.split(/\s+/); }
+  return a.map(function(x){ return String(x).trim() });
+}
+function parseNum(tok){
+  if(tok==null) return NaN;
+  var s=String(tok).replace(/[,，\s￥¥]/g,'');
+  if(!/^-?\d+(\.\d+)?$/.test(s)) return NaN;
+  return parseFloat(s);
+}
+function matOf(tok){
+  if(tok==null) return null;
+  var t=String(tok).toUpperCase().replace(/\s/g,'');
+  for(var k=0;k<MATS.length;k++){
+    var m=MATS[k];
+    if(t===m) return m;                       // 精确的内部字母
+    var kws=[mname(m).toUpperCase(), mcode(m).toUpperCase(), mcode(m).toUpperCase().replace(/[^A-Z0-9]/g,'')];
+    for(var j=0;j<kws.length;j++){ if(kws[j]&&t.indexOf(kws[j])>=0) return m; }
+  }
+  return null;
+}
+function buildColSel(sel,cols,autoLabel,val){
+  var o='<option value="-1"'+(val==null||val<0?' selected':'')+'>'+autoLabel+'</option>';
+  for(var i=0;i<cols;i++) o+='<option value="'+i+'"'+(val===i?' selected':'')+'>第 '+(i+1)+' 列</option>';
+  $(sel).innerHTML=o;
+}
+function analyzePaste(){
+  var text=$('#pasteIn').value||'';
+  P.grid=text.split('\n').filter(function(l){ return l.trim() }).map(splitRow);
+  P.cols=0; P.grid.forEach(function(r){ if(r.length>P.cols) P.cols=r.length });
+  var score=[],i;
+  for(i=0;i<P.cols;i++) score[i]=0;
+  P.grid.forEach(function(r){ for(var j=0;j<r.length;j++){ if(matOf(r[j])) score[j]++ } });
+  var best=-1,bv=0;
+  for(i=0;i<P.cols;i++){ if(score[i]>bv){ bv=score[i]; best=i } }
+  var numCols=[];
+  for(i=0;i<P.cols;i++){
+    var c=0; (function(k){ P.grid.forEach(function(r){ if(!isNaN(parseNum(r[k]))) c++ }) })(i);
+    if(c>0) numCols.push(i);
+  }
+  buildColSel('#mapMat',P.cols,'自动识别',best);
+  buildColSel('#mapRecv',P.cols,'无',numCols.length?numCols[0]:-1);
+  buildColSel('#mapDef',P.cols,'无',numCols.length>1?numCols[1]:-1);
+  renderPastePreview();
+}
+function computeImport(){
+  var mc=+$('#mapMat').value, rc=+$('#mapRecv').value, dc=+$('#mapDef').value;
+  var sum={},unmatched=0,total=0;
+  P.grid.forEach(function(row){
+    var m=null,i;
+    if(mc>=0) m=matOf(row[mc]);
+    else { for(i=0;i<row.length&&!m;i++) m=matOf(row[i]) }
+    var recv=rc>=0?(parseNum(row[rc])||0):0;
+    var def=dc>=0?(parseNum(row[dc])||0):0;
+    if(!m||MATS.indexOf(m)<0){ if(row.join('').replace(/[\s\-]/g,'')) unmatched++; return }
+    if(!recv&&!def) return;
+    if(!sum[m]) sum[m]={recv:0,def:0};
+    sum[m].recv+=recv; sum[m].def+=def; total++;
+  });
+  return {sum:sum,unmatched:unmatched,total:total};
+}
+function renderPastePreview(){
+  var r=computeImport(), box=$('#pastePreview');
+  if(!P.grid.length){ box.innerHTML=''; return }
+  var rows=MATS.filter(function(m){ return r.sum[m] });
+  if(!rows.length){
+    box.innerHTML='<div class="pv"><div class="unmatched">未识别到有效数据（共 '+P.grid.length+' 行）。请确认某一列包含大黑 / 小黑 / 蓝色（或料号），并在上方指定数量列。</div></div>';
+    return;
+  }
+  var h='<div class="pv"><table><thead><tr><th>料</th><th style="text-align:right">收料合计</th><th style="text-align:right">合格入库</th><th style="text-align:right">不良</th><th style="text-align:right">不良率</th></tr></thead><tbody>';
+  rows.forEach(function(m){
+    var s=r.sum[m], tot=s.recv+s.def;
+    h+='<tr><td class="mrow" style="color:'+MAT_COLOR[m]+'">'+mname(m)+'<span style="color:#94a3b8;font-weight:500;font-size:11px"> '+mcode(m)+'</span></td>'+
+      '<td class="num" style="text-align:right;font-weight:700">'+fmt(tot)+'</td>'+
+      '<td class="num" style="text-align:right;color:'+MAT_COLOR[m]+'">'+fmt(s.recv)+'</td>'+
+      '<td class="num" style="text-align:right;color:'+(s.def?'var(--bad)':'var(--muted2)')+'">'+fmt(s.def)+'</td>'+
+      '<td class="num" style="text-align:right">'+(tot?(s.def/tot*100).toFixed(2)+'%':'—')+'</td></tr>';
+  });
+  h+='</tbody></table>';
+  if(r.unmatched) h+='<div class="unmatched">另有 '+r.unmatched+' 行未识别出料别，已忽略。可手动指定「料别」列。</div>';
+  h+='</div>';
+  box.innerHTML=h;
+}
+function applyImport(sum){
+  var today=todayStr();
+  MATS.forEach(function(m){
+    var s=sum[m]; if(!s) return;
+    var remainRecv=s.recv, remainDef=s.def;
+    var trans=D.batches.filter(function(b){ return b.m===m&&statusOf(b)==='transit' })
+      .sort(function(a,b){ return (a.shipDate||'')<(b.shipDate||'')?-1:1 });
+    trans.forEach(function(b){
+      if((remainRecv<=0&&remainDef<=0)||b.recvDate) return;
+      var cap=n(b.shipQty)||n(b.sendQty);
+      var takeRecv=Math.min(remainRecv,cap);
+      b.recvDate=today; b.recvQty=takeRecv;
+      var takeDef=Math.min(remainDef,Math.max(0,cap-takeRecv));
+      b.defectQty=takeDef;
+      remainRecv-=takeRecv; remainDef-=takeDef;
+    });
+    if(remainRecv>0||remainDef>0){
+      var q=remainRecv+remainDef;
+      D.batches.push({id:uid(),m:m,sendDate:today,sendQty:q,etaDate:today,shipDate:today,shipQty:q,recvDate:today,recvQty:remainRecv,defectQty:remainDef,note:'金蝶导入'});
+    }
+  });
+}
+$('#btnPaste').onclick=function(){
+  $('#pasteIn').value=''; $('#pastePreview').innerHTML='';
+  P.grid=[]; P.cols=0;
+  buildColSel('#mapMat',0,'自动识别',-1); buildColSel('#mapRecv',0,'无',-1); buildColSel('#mapDef',0,'无',-1);
+  $('#maskPaste').classList.add('on');
+  setTimeout(function(){ try{ $('#pasteIn').focus() }catch(e){ } },60);
+};
+var pTimer=null;
+$('#pasteIn').addEventListener('input',function(){ clearTimeout(pTimer); pTimer=setTimeout(analyzePaste,200) });
+['#mapMat','#mapRecv','#mapDef'].forEach(function(s){ $(s).addEventListener('change',renderPastePreview) });
+$('#okPaste').onclick=function(){
+  var r=computeImport();
+  var keys=MATS.filter(function(m){ return r.sum[m] });
+  if(!keys.length){ toast('没有可导入的数据'); return }
+  if(!confirm('将把识别到的入库数据（'+keys.join('、')+' 料）登记为已入库，确认继续？')) return;
+  applyImport(r.sum);
+  $('#maskPaste').classList.remove('on');
+  markDirty(); curTab='done'; renderAll();
+  toast('已导入 '+keys.length+' 个料的入库数据');
+};
+$('#xPaste').onclick=function(){ $('#maskPaste').classList.remove('on') };
+$('#cPaste').onclick=function(){ $('#maskPaste').classList.remove('on') };
+$('#maskPaste').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('on') });
+
+$('#stkDate').addEventListener('change',function(){
+  var t=(D.stockLog||[]).filter(function(x){ return x.date===this.value }.bind(this))[0];
+  $('#stkA').value=t?t.A:''; $('#stkB').value=t?t.B:''; $('#stkC').value=t?t.C:'';
+});
+
+function saveStock(){
+  var d=$('#stkDate').value||todayStr();
+  var rec={date:d,A:n($('#stkA').value),B:n($('#stkB').value),C:n($('#stkC').value),at:new Date().toISOString()};
+  D.stockLog=D.stockLog.filter(function(x){ return x.date!==d });
+  D.stockLog.push(rec);
+  stockEditing=false;
+  markDirty(); renderAll(); toast('已保存 '+d+' 的即时库存');
+}
+function enterStockEdit(){
+  stockEditing=true;
+  var today=todayStr();
+  var t=(D.stockLog||[]).filter(function(x){ return x.date===today })[0];
+  $('#stkDate').value=today;
+  $('#stkA').value=t?t.A:''; $('#stkB').value=t?t.B:''; $('#stkC').value=t?t.C:'';
+  renderStock();
+  setTimeout(function(){ try{ $('#stkA').focus() }catch(e){} },60);
+}
+$('#btnStockAction').onclick=function(){
+  if(stockEditing) saveStock(); else enterStockEdit();
+};
+
+$('#btnStockHistory').onclick=function(){
+  var log=(D.stockLog||[]).slice().sort(function(a,b){ return a.date<b.date?1:-1 });
+  if(!log.length){ $('#stockHistoryBd').innerHTML='<div class="empty">暂无库存记录</div>' }
+  else{
+    $('#stockHistoryBd').innerHTML='<div class="tw"><table style="min-width:0"><thead><tr><th>日期</th><th style="text-align:right">A</th><th style="text-align:right">B</th><th style="text-align:right">C</th><th style="width:40px"></th></tr></thead><tbody>'+
+      log.map(function(r,i){
+        return '<tr><td>'+esc(r.date)+'</td><td class="num" style="text-align:right;font-weight:650;color:var(--a)">'+fmt(r.A)+'</td>'+
+        '<td class="num" style="text-align:right;font-weight:650;color:var(--b)">'+fmt(r.B)+'</td>'+
+        '<td class="num" style="text-align:right;font-weight:650;color:var(--c)">'+fmt(r.C)+'</td>'+
+        '<td>'+(i===0?'':'<button class="del" data-sd="'+esc(r.date)+'">&times;</button>')+'</td></tr>';
+      }).join('')+'</tbody></table></div>';
+    $$('#stockHistoryBd [data-sd]').forEach(function(b){
+      b.onclick=function(){ var d=b.getAttribute('data-sd'); D.stockLog=D.stockLog.filter(function(x){return x.date!==d}); markDirty(); renderAll(); b.closest('tr').remove() };
+    });
+  }
+  $('#maskStock').classList.add('on');
+};
+$('#xStock').onclick=function(){ $('#maskStock').classList.remove('on') };
+
+/* 设置弹窗 */
+function fillSettings(){
+  var has=!!CFG.cloudId;
+  $('#cloudId').value=CFG.cloudId||'';
+  var pv=CFG.provider||'auto';
+  $('#selProvider').value=(PROVIDERS[pv]||pv==='auto')?pv:'auto';
+  $('#keyBox').style.display=(pv==='jsonbin')?'block':'none';
+  $('#apiKey').value=CFG.apiKey||'';
+  $('#cbBox').style.display=(pv==='cloudbase')?'block':'none';
+  $('#cbEnv').value=CFG.cbEnv||'';
+  $('#cbColl').value=CFG.cbColl||'xinjiu-dash';
+  $('#cbRegion').value=CFG.cbRegion||'ap-shanghai';
+  $('#customBox').style.display=(pv==='custom')?'block':'none';
+  $('#cuRead').value=CFG.cuRead||''; $('#cuWrite').value=CFG.cuWrite||'';
+  $('#ghBox').style.display=(pv==='github')?'block':'none';
+  $('#ghToken').value=CFG.ghToken||'';
+  $('#ghGist').value=CFG.ghGist||CFG.cloudId||'';
+  $('#autoSync').checked=CFG.autoSync!==false;
+  $('#cycleDays').value=D.cycleDays;
+  $('#shareBox').style.display=has?'block':'none';
+  if(has){
+    var base=location.origin+location.pathname;
+    var q='?s='+encodeURIComponent((CFG.provider||'jsonblob')+':'+CFG.cloudId);
+    if(CFG.provider==='custom') q='?s=custom:'+encodeURIComponent((CFG.cuRead||'')+'|'+(CFG.cuWrite||''));
+    if(CFG.provider==='cloudbase') q='?s=cloudbase:'+encodeURIComponent((CFG.cbEnv||'')+'|'+(CFG.cbColl||'xinjiu-dash')+'|'+(CFG.cbRegion||'ap-shanghai')+'|'+(CFG.cloudId||'main'));
+    $('#shareUrl').textContent=base+q;
+    $('#shareUrlView').textContent=base+q+'&v=view';
+    syncUrl();
+    $('#cloudTip').innerHTML='<b style="color:var(--ok)">已连接云端</b>（'+esc((PROVIDERS[CFG.provider]||PROVIDERS.restful).name)+' · ID '+esc(CFG.cloudId)+'）<br>所有改动会<b>自动保存并上传云端</b>；换设备、换网络打开主链接数据都在。把「供应商链接」发给供应商，对方<b>可填写批次表格、可在「喷塑中 / 发货在途」页新增批次、可在「喷塑中」页标记发货</b>，但不能删除 / 新增入库 / 改物料 / 标记入库 / 改设置。';
+  }else{
+    $('#cloudTip').textContent='尚未创建云端空间。创建后会生成一个分享链接，供应商（任何网络）打开即可看到并填写同一份数据。';
+  }
+}
+$('#btnSettings').onclick=function(){ fillSettings(); $('#maskSet').classList.add('on') };
+$('#syncBadge').onclick=function(){
+  if(IS_VIEW){ toast('供应商模式：表格可直接填写，自动同步到云端'); return }
+  fillSettings(); $('#maskSet').classList.add('on');
+};
+$('#xSet').onclick=function(){ $('#maskSet').classList.remove('on') };
+$('#maskSet').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('on') });
+$('#maskStock').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('on') });
+$('#selProvider').onchange=function(){
+  $('#customBox').style.display=(this.value==='custom')?'block':'none';
+  $('#keyBox').style.display=(this.value==='jsonbin')?'block':'none';
+  $('#cbBox').style.display=(this.value==='cloudbase')?'block':'none';
+  $('#ghBox').style.display=(this.value==='github')?'block':'none';
+};
+$('#btnTest').onclick=testConn;
+
+function applySettings(){
+  var sel=$('#selProvider').value;
+  if(sel!=='auto') CFG.provider=sel;
+  CFG.apiKey=$('#apiKey').value.trim();
+  CFG.cuRead=$('#cuRead').value; CFG.cuWrite=$('#cuWrite').value;
+  CFG.autoSync=$('#autoSync').checked;
+  CFG.cbEnv=$('#cbEnv').value.trim();
+  CFG.cbColl=$('#cbColl').value.trim()||'xinjiu-dash';
+  CFG.cbRegion=$('#cbRegion').value;
+  CFG.ghToken=$('#ghToken').value.trim();
+  CFG.ghGist=$('#ghGist').value.trim();
+  if(sel==='github' && CFG.ghGist) CFG.cloudId=CFG.ghGist;
+  PROVIDERS.cloudbase._db=null; /* 环境/集合可能已改，保存后重连 */
+  D.cycleDays=n($('#cycleDays').value);
+  saveCfg(); markDirty(); renderAll();
+}
+
+$('#btnSaveSettings').onclick=function(){
+  applySettings();
+  $('#maskSet').classList.remove('on');
+  toast('设置已保存');
+};
+
+/* 物料设置弹窗 */
+function initCodes(){
+  if(!D.codes){ D.codes={}; MATS.forEach(function(m){ D.codes[m]={code:MAT_DEF[m].code,name:MAT_DEF[m].name} }) }
+  if(!D.orders){ D.orders={A:n(D.targets.A),B:n(D.targets.B),C:n(D.targets.C)} }
+}
+function fillMat(){
+  initCodes();
+  var def={A:'大黑',B:'小黑',C:'蓝色'};
+  MATS.forEach(function(m){
+    $('#code'+m).value=D.codes[m].code||'';
+    $('#name'+m).value=D.codes[m].name||def[m];
+    $('#og'+m).value=D.orders[m];
+    $('#tg'+m).value=D.targets[m];
+  });
+}
+function applyMat(){
+  initCodes();
+  MATS.forEach(function(m){
+    D.codes[m]={code:$('#code'+m).value.trim(), name:$('#name'+m).value.trim()||({A:'大黑',B:'小黑',C:'蓝色'})[m]};
+    D.orders[m]=n($('#og'+m).value);
+    D.targets[m]=n($('#tg'+m).value);
+  });
+  markDirty(); renderAll();
+}
+$('#btnMatSettings').onclick=function(){ fillMat(); $('#maskMat').classList.add('on') };
+$('#xMat').onclick=function(){ $('#maskMat').classList.remove('on') };
+$('#cMat').onclick=function(){ $('#maskMat').classList.remove('on') };
+$('#maskMat').addEventListener('click',function(e){ if(e.target===this) this.classList.remove('on') });
+$('#btnSaveMat').onclick=function(){ applyMat(); $('#maskMat').classList.remove('on'); toast('物料设置已保存') };
+
+$('#cSet').onclick=function(){ $('#maskSet').classList.remove('on') };
+
+$('#btnCreate').onclick=function(){
+  applySettings();
+  var id=$('#cloudId').value.trim();
+  if(id){ CFG.cloudId=id; saveCfg(); cloudPull().then(function(){ fillSettings(); renderAll() }) }
+  else cloudCreate();
+};
+$('#btnDisc').onclick=function(){
+  if(!confirm('断开云端？本机数据会保留，但不再与供应商同步。')) return;
+  CFG.cloudId=''; saveCfg(); setSync('','本地模式'); fillSettings(); toast('已断开云端');
+};
+$('#btnCopyUrl').onclick=function(){ copy($('#shareUrl').textContent,'主链接已复制（可编辑）') };
+$('#btnOpenUrl').onclick=function(){ window.open($('#shareUrl').textContent,'_blank') };
+$('#btnCopyUrlView').onclick=function(){ copy($('#shareUrlView').textContent,'供应商填写链接已复制，发给供应商即可') };
+$('#btnOpenUrlView').onclick=function(){ window.open($('#shareUrlView').textContent,'_blank') };
+$('#btnManualSync').onclick=function(){
+  if(!CFG.cloudId){ toast('尚未连接云端，点「设置 / 分享」创建'); return }
+  cloudPull().then(function(){ return cloudPush() });
+};
+
+/* 备份 */
+$('#btnExport').onclick=function(){
+  var blob=new Blob([JSON.stringify(D,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='鑫久供货数据_'+todayStr()+'.json'; a.click();
+  setTimeout(function(){ URL.revokeObjectURL(a.href) },1000);
+};
+$('#btnImport').onclick=function(){ $('#fileIn').click() };
+$('#fileIn').onchange=function(e){
+  var f=e.target.files[0]; if(!f) return;
+  var r=new FileReader();
+  r.onload=function(){
+    try{
+      var o=JSON.parse(r.result);
+      if(!o||typeof o!=='object') throw new Error('格式错误');
+      if(!confirm('导入将覆盖当前数据，确认继续？')) return;
+      var d=defaultData(); for(var k in d){ if(!(k in o)) o[k]=d[k] }
+      D=o; markDirty(); renderAll(); fillSettings(); toast('导入成功');
+    }catch(err){ toast('导入失败：'+err.message) }
+  };
+  r.readAsText(f); e.target.value='';
+};
+$('#btnCopyCode').onclick=function(){ encodeData(JSON.stringify(D)).then(function(c){ copy(c,'数据码已复制，微信发给对方粘贴导入') }) };
+$('#btnPasteCode').onclick=function(){
+  var s=prompt('把对方发来的数据码粘贴到这里：'); if(!s) return;
+  decodeData(s.trim()).then(function(j){
+    try{ var o=JSON.parse(j); if(!confirm('导入将覆盖当前数据，确认继续？')) return;
+      var d=defaultData(); for(var k in d){ if(!(k in o)) o[k]=d[k] }
+      D=o; markDirty(); renderAll(); fillSettings(); toast('导入成功');
+    }catch(e){ toast('数据码无效') }
+  }).catch(function(){ toast('数据码解析失败') });
+};
+$('#btnReset').onclick=function(){
+  if(!confirm('确认清空全部批次与库存记录？此操作不可恢复。')) return;
+  D=defaultData(); markDirty(); renderAll(); toast('已清空');
+};
+$('#btnRestoreBak').onclick=function(){
+  var b=hasBak();
+  if(!b){ toast('本机没有可用备份'); return }
+  var cnt=(b.batches?b.batches.length:0), sc=(b.stockLog?b.stockLog.length:0);
+  var at='';
+  try{ at=localStorage.getItem(LS_KEY+'_bak_at')||'' }catch(e){}
+  if(!confirm('发现本机备份：批次 '+cnt+' 条、库存记录 '+sc+' 条'+(at?('\n备份时间：'+new Date(at).toLocaleString('zh-CN')):'')+'\n\n要用这份备份覆盖当前数据吗？')) return;
+  D=b; markDirty(); renderAll(); toast('已从本机备份恢复');
+};
+
+function copy(txt,msg){
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ toast(msg) },function(){ fallback() });
+  }else fallback();
+  function fallback(){
+    var ta=document.createElement('textarea'); ta.value=txt; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand('copy'); toast(msg) }catch(e){ prompt('复制以下内容：',txt) }
+    document.body.removeChild(ta);
+  }
+}
+function b64(bytes){
+  var s='',a=bytes instanceof Uint8Array?bytes:new Uint8Array(bytes);
+  for(var i=0;i<a.length;i++) s+=String.fromCharCode(a[i]);
+  return btoa(s);
+}
+function unb64(str){ var s=atob(str),a=new Uint8Array(s.length); for(var i=0;i<s.length;i++)a[i]=s.charCodeAt(i); return a }
+function encodeData(json){
+  if(typeof CompressionStream==='function'){
+    var cs=new CompressionStream('deflate-raw');
+    return new Response(new Blob([json]).stream().pipeThrough(cs)).arrayBuffer()
+      .then(function(buf){ return 'XJ1:'+b64(new Uint8Array(buf)) })
+      .catch(function(){ return Promise.resolve('XJ0:'+btoa(unescape(encodeURIComponent(json)))) });
+  }
+  return Promise.resolve('XJ0:'+btoa(unescape(encodeURIComponent(json))));
+}
+function decodeData(code){
+  var m=/^XJ1:(.+)$/.exec(code);
+  if(m && typeof DecompressionStream==='function'){
+    var bytes=unb64(m[1]);
+    return new Response(new Blob([bytes]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text()
+      .catch(function(){ return Promise.reject() });
+  }
+  var m0=/^XJ0:(.+)$/.exec(code);
+  if(m0) return Promise.resolve(decodeURIComponent(escape(atob(m0[1]))));
+  return Promise.resolve(decodeURIComponent(escape(atob(code))));
+}
+
+var toastTimer=null;
+function toast(msg){
+  var t=$('#toast'); t.textContent=msg; t.classList.add('on');
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove('on') },2400);
+}
+
+/* 复制料号图标（SVG，非 emoji） */
+function copyIcon(){
+  return '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2.2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>';
+}
+function copyText(text){
+  text=String(text||'');
+  function done(){ toast('已复制料号：'+text) }
+  function fail(){ toast('复制失败，请手动复制：'+text) }
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(text).then(done, function(){ fallbackCopy(text, done, fail) });
+  } else fallbackCopy(text, done, fail);
+}
+function fallbackCopy(text, done, fail){
+  var ta=document.createElement('textarea'); ta.value=text;
+  ta.style.position='fixed'; ta.style.top='-1000px'; ta.style.opacity='0';
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand('copy'); (done||function(){})() }catch(e){ (fail||function(){})() }
+  document.body.removeChild(ta);
+}
+/* 委托：点击任意 .copybtn 复制 data-code */
+document.addEventListener('click', function(e){
+  var b=e.target.closest && e.target.closest('.copybtn');
+  if(!b) return;
+  e.preventDefault(); e.stopPropagation();
+  var code=b.getAttribute('data-code')||'';
+  var m=b.getAttribute('data-m');
+  if(m){ var inp=document.getElementById('code'+m); if(inp && inp.value.trim()) code=inp.value.trim() }
+  copyText(code);
+  b.classList.add('ok');
+  setTimeout(function(){ b.classList.remove('ok') },1200);
+});
+
+/* ============ 启动 ============ */
+function initFromUrl(){
+  var q=new URLSearchParams(location.search).get('s');
+  if(!q) return false;
+  if(q.indexOf('custom:')===0){
+    var parts=decodeURIComponent(q.slice(7)).split('|');
+    CFG.provider='custom'; CFG.cuRead=parts[0]||''; CFG.cuWrite=parts[1]||''; CFG.cloudId='custom';
+  }else if(q.indexOf('cloudbase:')===0){
+    var cb=decodeURIComponent(q.slice(10)).split('|');
+    CFG.provider='cloudbase';
+    CFG.cbEnv=cb[0]||''; CFG.cbColl=cb[1]||'xinjiu-dash'; CFG.cbRegion=cb[2]||'ap-shanghai';
+    CFG.cloudId=cb[3]||'main';
+  }else{
+    var i=q.indexOf(':');
+    if(i<0) return false;
+    CFG.provider=q.slice(0,i); CFG.cloudId=q.slice(i+1);
+  }
+  CFG.autoSync=CFG.autoSync!==false;
+  saveCfg();
+  return true;
+}
+
+(function boot(){
+  var fromUrl=initFromUrl();
+  applyViewMode();
+  renderAll();
+  if(CFG.cloudId){
+    setSync('load','连接中…');
+    cloudPull(true).then(function(){ syncUrl(); if(CFG.autoSync) startAuto() });
+  }else{
+    setSync('','本地模式');
+  }
+})();
+
+function startAuto(){
+  setInterval(function(){ if(document.visibilityState==='visible' && !syncState.dirty) cloudPull(true) },60000);
+  window.addEventListener('focus',function(){ if(!syncState.dirty) cloudPull(true) });
+}
+
+/* 金额/数字输入回车即跳下一个 */
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&e.target&&e.target.classList&&e.target.classList.contains('cell')){
+    e.target.blur();
+  }
+});
+
+})();
+</script>
+</body>
+</html>
